@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Backfill"
+  short_description: "Recover sourced author theses, tickers and updates"
+  default_prompt: "Use $thesis-backfill for the person I provide: follow contract 3.1, explain company roles and project context in plain English, map claims to evidence, select a Source supporting the core judgment and reason, preserve history, and validate the result."

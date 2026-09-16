@@ -1,0 +1,47 @@
+[
+  {
+    "thesisId": 1,
+    "type": "new_thesis",
+    "createdAtMs": 1788264000000,
+    "author": {
+      "id": "backend-mon"
+    },
+    "body": "Reviewed statement 0.\n\nA distinct supporting paragraph.\n\n[mon · X](https://example.invalid/post/0)",
+    "tickers": [
+      {
+        "symbol": "EXAMPLE"
+      }
+    ],
+    "media": []
+  },
+  {
+    "thesisId": 1,
+    "type": "thesis_update",
+    "createdAtMs": 1788350400000,
+    "author": {
+      "id": "backend-mon"
+    },
+    "body": "Reviewed statement 1.\n\nA distinct supporting paragraph.\n\n[mon · X](https://example.invalid/post/1)",
+    "tickers": [
+      {
+        "symbol": "EXAMPLE"
+      }
+    ],
+    "media": []
+  },
+  {
+    "thesisId": 1,
+    "type": "thesis_update",
+    "createdAtMs": 1788436800000,
+    "author": {
+      "id": "backend-mon"
+    },
+    "body": "Reviewed statement 2.\n\nA distinct supporting paragraph.\n\n[mon · X](https://example.invalid/post/2)",
+    "tickers": [
+      {
+        "symbol": "EXAMPLE"
+      }
+    ],
+    "media": []
+  }
+]

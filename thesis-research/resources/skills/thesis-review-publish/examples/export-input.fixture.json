@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "thesis-export-input/1.1",
+  "runId": "fixture-run",
+  "timePolicy": "expression_time",
+  "authorMap": [
+    {
+      "internalAuthorId": "local-mon",
+      "authorId": "backend-mon"
+    }
+  ],
+  "assignments": {
+    "authority": "fixture",
+    "revision": "fixture-map",
+    "entries": [
+      {
+        "authorId": "backend-mon",
+        "internalThesisKey": "company:example",
+        "thesisId": 1
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "source-0",
+      "revision": "v1",
+      "authorIds": [
+        "local-mon"
+      ],
+      "url": "https://example.invalid/post/0",
+      "displayName": "mon · X",
+      "text": "原文 0\nOriginal statement 0.",
+      "at": "2026-09-01T12:00:00Z",
+      "linkAllowed": true,
+      "attachmentStatus": "none",
+      "attachments": []
+    },
+    {
+      "id": "source-1",
+      "revision": "v1",
+      "authorIds": [
+        "local-mon"
+      ],
+      "url": "https://example.invalid/post/1",
+      "displayName": "mon · X",
+      "text": "原文 1\nOriginal statement 1.",
+      "at": "2026-09-02T12:00:00Z",
+      "linkAllowed": true,
+      "attachmentStatus": "none",
+      "attachments": []
+    },
+    {
+      "id": "source-2",
+      "revision": "v1",
+      "authorIds": [
+        "local-mon"
+      ],
+      "url": "https://example.invalid/post/2",
+      "displayName": "mon · X",
+      "text": "原文 2\nOriginal statement 2.",
+      "at": "2026-09-03T12:00:00Z",
+      "linkAllowed": true,
+      "attachmentStatus": "none",
+      "attachments": []
+    }
+  ],
+  "items": [
+    {
+      "internalAuthorId": "local-mon",
+      "internalThesisKey": "company:example",
+      "eventId": "event-0",
+      "type": "new_thesis",
+      "mode": "history_event",
+      "eventType": "FIRST_OBSERVED",
+      "at": "2026-09-01T12:00:00Z",
+      "description": "Reviewed statement 0.\n\nA distinct supporting paragraph.",
+      "sourceIds": [
+        "source-0"
+      ],
+      "primarySourceId": "source-0",
+      "assetBindings": [
+        {
+          "role": "primary",
+          "symbol": "EXAMPLE",
+          "verified": true
+        },
+        {
+          "role": "related",
+          "symbol": "OTHER",
+          "verified": true
+        }
+      ],
+      "media": [],
+      "originStatus": "unknown",
+      "baselineVersion": null,
+      "review": {
+        "status": "approved",
+        "id": "review-0",
+        "reviewer": "fixture-reviewer",
+        "method": "synthetic fixture; not real approval"
+      },
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-0",
+          "mode": "history_event",
+          "at": "2026-09-01T12:00:00Z",
+          "primarySourceId": "source-0",
+          "reviewId": "review-0",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": null
+        },
+        "bodySha256": "8032788a295276171eed7f220338aa12ffa568573a3ea2a0bcef9c0d379a43c3",
+        "sources": [
+          {
+            "id": "source-0",
+            "revision": "v1",
+            "url": "https://example.invalid/post/0",
+            "at": "2026-09-01T12:00:00Z",
+            "textSha256": "1653ceee346265a0be4dbde536494c2be04b90a82feb3be210ac71fa2b725977",
+            "provenanceSha256": "8867f14a354dc050d34890158a373e3c5834adafaa93ceedce1b17b4ac41aad3"
+          }
+        ]
+      },
+      "expressionSourceIds": [
+        "source-0"
+      ],
+      "sourceImageBindings": [],
+      "visualDependency": "none",
+      "visualDependencyReason": "Fixture source images add no material context.",
+      "eventDisposition": "update",
+      "incrementReview": {
+        "decision": "update",
+        "incrementKind": "reason",
+        "increment": "Initial judgment and reason.",
+        "reviewId": "review-0"
+      }
+    },
+    {
+      "internalAuthorId": "local-mon",
+      "internalThesisKey": "company:example",
+      "eventId": "event-1",
+      "type": "thesis_update",
+      "mode": "history_event",
+      "eventType": "EVIDENCE",
+      "at": "2026-09-02T12:00:00Z",
+      "description": "Reviewed statement 1.\n\nA distinct supporting paragraph.",
+      "sourceIds": [
+        "source-1"
+      ],
+      "primarySourceId": "source-1",
+      "assetBindings": [
+        {
+          "role": "primary",
+          "symbol": "EXAMPLE",
+          "verified": true
+        },
+        {
+          "role": "related",
+          "symbol": "OTHER",
+          "verified": true
+        }
+      ],
+      "media": [],
+      "originStatus": "unknown",
+      "baselineVersion": "v1",
+      "review": {
+        "status": "approved",
+        "id": "review-1",
+        "reviewer": "fixture-reviewer",
+        "method": "synthetic fixture; not real approval"
+      },
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-1",
+          "mode": "history_event",
+          "at": "2026-09-02T12:00:00Z",
+          "primarySourceId": "source-1",
+          "reviewId": "review-1",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": "v1"
+        },
+        "bodySha256": "774f3f9ad8136ccdfdfef324538dacdd4dd6019bb8094f3e81e29dd5831e622f",
+        "sources": [
+          {
+            "id": "source-1",
+            "revision": "v1",
+            "url": "https://example.invalid/post/1",
+            "at": "2026-09-02T12:00:00Z",
+            "textSha256": "f6af12cf19e153090f00014cb8a7ec15c734785f242206928cd0f07adde10c9d",
+            "provenanceSha256": "8867f14a354dc050d34890158a373e3c5834adafaa93ceedce1b17b4ac41aad3"
+          }
+        ]
+      },
+      "expressionSourceIds": [
+        "source-1"
+      ],
+      "sourceImageBindings": [],
+      "visualDependency": "none",
+      "visualDependencyReason": "Fixture source images add no material context.",
+      "eventDisposition": "update",
+      "incrementReview": {
+        "decision": "update",
+        "incrementKind": "evidence",
+        "increment": "Additional material evidence.",
+        "reviewId": "review-1"
+      }
+    },
+    {
+      "internalAuthorId": "local-mon",
+      "internalThesisKey": "company:example",
+      "eventId": "event-2",
+      "type": "thesis_update",
+      "mode": "history_event",
+      "eventType": "EVIDENCE",
+      "at": "2026-09-03T12:00:00Z",
+      "description": "Reviewed statement 2.\n\nA distinct supporting paragraph.",
+      "sourceIds": [
+        "source-2"
+      ],
+      "primarySourceId": "source-2",
+      "assetBindings": [
+        {
+          "role": "primary",
+          "symbol": "EXAMPLE",
+          "verified": true
+        },
+        {
+          "role": "related",
+          "symbol": "OTHER",
+          "verified": true
+        }
+      ],
+      "media": [],
+      "originStatus": "unknown",
+      "baselineVersion": "v1",
+      "review": {
+        "status": "approved",
+        "id": "review-2",
+        "reviewer": "fixture-reviewer",
+        "method": "synthetic fixture; not real approval"
+      },
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-2",
+          "mode": "history_event",
+          "at": "2026-09-03T12:00:00Z",
+          "primarySourceId": "source-2",
+          "reviewId": "review-2",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": "v1"
+        },
+        "bodySha256": "a2945adff167dca04e9e43741aa6b13ac9a410efc47d9010ee01b51678c67c97",
+        "sources": [
+          {
+            "id": "source-2",
+            "revision": "v1",
+            "url": "https://example.invalid/post/2",
+            "at": "2026-09-03T12:00:00Z",
+            "textSha256": "ef0c2ddb4c83e8810eb06d2676eb17d5bd3d3400b6cd920bf8d2709139017295",
+            "provenanceSha256": "8867f14a354dc050d34890158a373e3c5834adafaa93ceedce1b17b4ac41aad3"
+          }
+        ]
+      },
+      "expressionSourceIds": [
+        "source-2"
+      ],
+      "sourceImageBindings": [],
+      "visualDependency": "none",
+      "visualDependencyReason": "Fixture source images add no material context.",
+      "eventDisposition": "update",
+      "incrementReview": {
+        "decision": "update",
+        "incrementKind": "evidence",
+        "increment": "Additional material evidence.",
+        "reviewId": "review-2"
+      }
+    }
+  ]
+}

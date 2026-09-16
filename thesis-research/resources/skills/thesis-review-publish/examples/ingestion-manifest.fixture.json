@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "thesis-ingestion/1.1",
+  "evidenceContract": "source-coverage/1.0",
+  "runId": "fixture-run",
+  "timePolicy": "expression_time",
+  "assignmentAuthority": "fixture",
+  "assignmentRevision": "fixture-map",
+  "status": "exported",
+  "productionIds": false,
+  "previewOnly": false,
+  "backendStatus": "not_connected",
+  "items": [
+    {
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-0",
+          "mode": "history_event",
+          "at": "2026-09-01T12:00:00Z",
+          "primarySourceId": "source-0",
+          "reviewId": "review-0",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": null
+        },
+        "bodySha256": "8032788a295276171eed7f220338aa12ffa568573a3ea2a0bcef9c0d379a43c3",
+        "sources": [
+          {
+            "id": "source-0",
+            "revision": "v1",
+            "url": "https://example.invalid/post/0",
+            "at": "2026-09-01T12:00:00Z",
+            "textSha256": "1653ceee346265a0be4dbde536494c2be04b90a82feb3be210ac71fa2b725977",
+            "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e"
+          }
+        ]
+      },
+      "cardIndex": 0,
+      "inputIndex": 0,
+      "authorId": "backend-mon",
+      "internalThesisKey": "company:example",
+      "thesisId": 1,
+      "eventId": "event-0",
+      "originalEventIds": [
+        "event-0"
+      ],
+      "mode": "history_event",
+      "eventType": "FIRST_OBSERVED",
+      "originStatus": "unknown",
+      "baselineVersion": null,
+      "reviewRecordId": "review-0",
+      "reviewer": "fixture-reviewer",
+      "reviewMethod": "synthetic fixture; not real approval",
+      "idempotencyKey": "d870bcecd1f141194cb7db2fca2c4a6e273430a2cfcc71c4d9fc4a2b9b534b96",
+      "contentHash": "3111791736750d10ccf9de77d99c3acc2e1debbdffeb7f9ecaac8e9af24d41c7",
+      "sourceRevisions": [
+        {
+          "id": "source-0",
+          "originalId": "source-0",
+          "revision": "v1",
+          "authorIds": [
+            "local-mon"
+          ],
+          "textSha256": "1653ceee346265a0be4dbde536494c2be04b90a82feb3be210ac71fa2b725977",
+          "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e",
+          "url": "https://example.invalid/post/0",
+          "linkLabel": "mon · X",
+          "at": "2026-09-01T12:00:00Z"
+        }
+      ],
+      "incrementReview": null,
+      "bindingRepair": null,
+      "dateBasis": "published",
+      "episodeId": null,
+      "accountId": null,
+      "operation": "append_event",
+      "ingestionStatus": "not_sent"
+    },
+    {
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-1",
+          "mode": "history_event",
+          "at": "2026-09-02T12:00:00Z",
+          "primarySourceId": "source-1",
+          "reviewId": "review-1",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": "v1"
+        },
+        "bodySha256": "774f3f9ad8136ccdfdfef324538dacdd4dd6019bb8094f3e81e29dd5831e622f",
+        "sources": [
+          {
+            "id": "source-1",
+            "revision": "v1",
+            "url": "https://example.invalid/post/1",
+            "at": "2026-09-02T12:00:00Z",
+            "textSha256": "f6af12cf19e153090f00014cb8a7ec15c734785f242206928cd0f07adde10c9d",
+            "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e"
+          }
+        ]
+      },
+      "cardIndex": 1,
+      "inputIndex": 1,
+      "authorId": "backend-mon",
+      "internalThesisKey": "company:example",
+      "thesisId": 1,
+      "eventId": "event-1",
+      "originalEventIds": [
+        "event-1"
+      ],
+      "mode": "history_event",
+      "eventType": "EVIDENCE",
+      "originStatus": "unknown",
+      "baselineVersion": "v1",
+      "reviewRecordId": "review-1",
+      "reviewer": "fixture-reviewer",
+      "reviewMethod": "synthetic fixture; not real approval",
+      "idempotencyKey": "3dcb3e8a3a0a9fb5daa4c6d055acf9f103bac225dcd3e721d19849e84641fb34",
+      "contentHash": "c7072a0aca9f5fd6650c5d04dcd3fc26f06541c427e73deee7a20e44ada064e2",
+      "sourceRevisions": [
+        {
+          "id": "source-1",
+          "originalId": "source-1",
+          "revision": "v1",
+          "authorIds": [
+            "local-mon"
+          ],
+          "textSha256": "f6af12cf19e153090f00014cb8a7ec15c734785f242206928cd0f07adde10c9d",
+          "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e",
+          "url": "https://example.invalid/post/1",
+          "linkLabel": "mon · X",
+          "at": "2026-09-02T12:00:00Z"
+        }
+      ],
+      "incrementReview": null,
+      "bindingRepair": null,
+      "dateBasis": "published",
+      "episodeId": null,
+      "accountId": null,
+      "operation": "append_event",
+      "ingestionStatus": "not_sent"
+    },
+    {
+      "sourceCoverage": {
+        "version": "source-coverage/1.0",
+        "identity": {
+          "author": "local-mon",
+          "thesis": "company:example",
+          "event": "event-2",
+          "mode": "history_event",
+          "at": "2026-09-03T12:00:00Z",
+          "primarySourceId": "source-2",
+          "reviewId": "review-2",
+          "reviewer": "fixture-reviewer",
+          "reviewMethod": "synthetic fixture; not real approval",
+          "baselineVersion": "v1"
+        },
+        "bodySha256": "a2945adff167dca04e9e43741aa6b13ac9a410efc47d9010ee01b51678c67c97",
+        "sources": [
+          {
+            "id": "source-2",
+            "revision": "v1",
+            "url": "https://example.invalid/post/2",
+            "at": "2026-09-03T12:00:00Z",
+            "textSha256": "ef0c2ddb4c83e8810eb06d2676eb17d5bd3d3400b6cd920bf8d2709139017295",
+            "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e"
+          }
+        ]
+      },
+      "cardIndex": 2,
+      "inputIndex": 2,
+      "authorId": "backend-mon",
+      "internalThesisKey": "company:example",
+      "thesisId": 1,
+      "eventId": "event-2",
+      "originalEventIds": [
+        "event-2"
+      ],
+      "mode": "history_event",
+      "eventType": "EVIDENCE",
+      "originStatus": "unknown",
+      "baselineVersion": "v1",
+      "reviewRecordId": "review-2",
+      "reviewer": "fixture-reviewer",
+      "reviewMethod": "synthetic fixture; not real approval",
+      "idempotencyKey": "a29faeef273045776e8de08d3af464326e900e2b5183416667129afd888a375e",
+      "contentHash": "07bda09058ca6f0a4b58c4840e2bb4f657518a5f7902e3a4f70e646b3cc07984",
+      "sourceRevisions": [
+        {
+          "id": "source-2",
+          "originalId": "source-2",
+          "revision": "v1",
+          "authorIds": [
+            "local-mon"
+          ],
+          "textSha256": "ef0c2ddb4c83e8810eb06d2676eb17d5bd3d3400b6cd920bf8d2709139017295",
+          "provenanceSha256": "18921b58c761e1b1fe96e62ee37eb4dbc4ca1b7e43702cd096298cd62d842b7e",
+          "url": "https://example.invalid/post/2",
+          "linkLabel": "mon · X",
+          "at": "2026-09-03T12:00:00Z"
+        }
+      ],
+      "incrementReview": null,
+      "bindingRepair": null,
+      "dateBasis": "published",
+      "episodeId": null,
+      "accountId": null,
+      "operation": "append_event",
+      "ingestionStatus": "not_sent"
+    }
+  ],
+  "duplicates": [],
+  "holds": []
+}

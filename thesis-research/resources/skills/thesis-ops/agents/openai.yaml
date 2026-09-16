@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Operations"
+  short_description: "Monitor author automations and recover pipeline issues"
+  default_prompt: "Use $thesis-ops to audit all investor automations, reconcile coverage and queues, and return prioritized recovery actions without changing public content."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Review and Publish"
+  short_description: "Verify thesis candidates before versioned publication"
+  default_prompt: "Use $thesis-review-publish to review this candidate batch against original sources, then prepare only the explicitly approved changes for publication."

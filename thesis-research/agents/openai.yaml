@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Research"
+  short_description: "Build and maintain source-backed investor theses"
+  default_prompt: "Use $thesis-research to recover or update the investor views I provide, apply the fundamental-only and conclusion-first contracts, verify every public expression against its source, and return validated output without publishing unless I authorize it."

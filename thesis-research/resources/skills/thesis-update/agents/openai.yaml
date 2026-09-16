@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Update"
+  short_description: "Classify new investor content into sourced updates"
+  default_prompt: "Use $thesis-update to process new content for the investor or automation I provide, preserve the source trail, and return update candidates without publishing."
