@@ -1,14 +1,14 @@
-# Generation Contract 3.1
+# Generation Contract 3.2
 
 This contract carries the approved product decisions into every new backfill.
 It supersedes older mechanism-level splitting and Timeline-title conventions.
 Do not hardcode author counts, ticker quotas, release IDs or dated examples into
 new runs. A person input starts the workflow; collection gaps still need reporting.
 
-New packets declare `generation_policy.public_scope` as
-`fundamental_company_only/1.0`. Technical analysis and trade setups remain private;
-every visible expression needs an independently supported fundamental conclusion
-and reason.
+New packets use `source_grounded_company_analysis/1.0` and
+`per-expression-ticker-stance/1.0`. Technical-only analysis remains private.
+Mixed analysis qualifies only with an independently supported non-technical
+judgment and why.
 
 ## One Author, One Company
 
@@ -43,9 +43,28 @@ explain the product/project, describe the specific action and connect it to the
 investment. A simpler word with the same missing context is not a successful edit.
 
 - Use professional, easy-to-understand plain English. Start with the investment
-  point: company/asset plus its directional conclusion and decisive reason in the
-  same first sentence. Avoid `X thinks`, `X believes`,
+  point: company/asset plus its directional conclusion and final investment landing
+  in the opening clause. Put the decisive mechanism in the same first sentence,
+  naming any counterparty, product or transaction needed to understand the causal
+  relationship. Avoid `X thinks`, `X believes`,
   `the September 12 post puts...`, process narration and generic slogans.
+- Every approved public record carries at least one verified ticker and one
+  source-backed `bullish`, `bearish` or `none` direction per displayed ticker.
+  Different tickers in one expression may have different directions. The exact
+  first visible sentence remains a natural `stance_sentence` under
+  `source-backed-opening/1.3` and the shared
+  [stance opening contract](stance-opening-contract.md). Derive it from the author's
+  sourced judgment, not the model's company view. Attractive/unattractive is valid
+  only when the same sentence names the specific mechanism and the family is not
+  overused. Bare attractiveness, appealing/compelling and `the case is strong/weak`
+  labels are invalid. Do not copy Bullish/Bearish/Neutral enum words into prose.
+  Valid states include
+  strengthening, weakening, constrained, exposed, undervalued, stretched,
+  execution-dependent and conditional upside. Adjacent duplicate families fail;
+  rolling-window or catalog concentration enters corpus editorial review rather
+  than automatic synonym rotation. Neutral is valid only for a source-supported
+  balanced view, not as a fallback for unresolved review.
+  The opening clause makes the stance immediately visible using varied natural forms rather than one required prefix. The following body supplies distinct evidence, a causal step, condition or risk; it must remain natural and must not restate the opening with synonyms.
 - Product prose states the investment meaning directly. Do not write `the article
   sees upside`, `the post describes`, `the source did not establish`, or similar
   narration about how extraction/review happened. Provenance belongs in the named
@@ -55,6 +74,17 @@ investment. A simpler word with the same missing context is not a successful edi
   to the reader. A source limitation belongs in visible prose only when it is itself
   material to the investment judgment and can be stated as an ordinary factual
   condition.
+- A why must be a complete sentence with a concrete mechanism. `Both EPS and
+  revenue exceeded expectations`, `continued capital spending and foundry
+  expansion`, and `its position in the supply chain` are not sufficient by
+  themselves. State how the fact changes demand, supply, pricing, margins,
+  valuation, competition, financing, customer adoption or risk. Objective facts
+  without that connection remain private evidence.
+- Classify every named ticker before rendering. `subject` and `vehicle` are the
+  only public tag roles. Benchmarks, customers, suppliers, partners, peers and
+  quoted-post context remain untagged unless the author gives that company its
+  own investment judgment. The final review records the role and source-specific
+  reason for every ticker.
 - Do not make a short source look more analytical than it is. A generated body may
   clarify stated meaning, but it may not import reasons from another date, another
   ticker, an unadopted quoted post or general company knowledge. A setup switch,
@@ -82,7 +112,14 @@ investment. A simpler word with the same missing context is not a successful edi
   If faithful prose still will not fit, retain the evidence privately and mark
   the draft for revision rather than approve a misleading summary. Unchanged
   published history remains frozen; this rule does not authorize a bulk rewrite.
-- Each paragraph should add something. Remove repeated conclusions and fragmented
+  `stance_sentence` remains a separate internal review field, but product export
+  prepends it to `description` as the first sentence of the single visible Feed
+  body. The combined visible passage, including the stance sentence, must fit the
+  500-character limit. It is not a title or a separately styled heading.
+- Each paragraph should add something. Read the rendered stance and body as one
+  passage. The first sentence must stand alone; do not defer a required identity
+  through `the partnership`, `the deal`, `new products` or a dangling pronoun.
+  Remove repeated conclusions and fragmented
   fact lists. Explain unfamiliar names, tickers used as concepts, instruments and
   documents on first use: identify Pershing Square USA rather than unexplained
   PSUS, and identify the shareholder letter and signatories rather than `the joint
@@ -102,6 +139,21 @@ compare it to later events, or copy the whole current thesis into a short reply.
 An author's own explicit revision or historical comparison can be retained; lead
 with the operative view at that date. Do not erase a source-backed reversal just
 to avoid comparative language.
+
+Apply `source-backed-timeline-opening/1.2` to each visible update. Sentence one
+states the dated directional implication and the source-backed mechanism together,
+including any named company, product, counterparty or transaction needed to
+understand it. The next sentence may add only contemporaneous evidence, condition
+or risk. Timeline does not carry the current card's stance enum and does not need
+a literal Bullish/Bearish prefix. A factual update may stay short, but it cannot
+start with background and postpone what that fact meant for the investment.
+
+Every visible Timeline update has its own verified ticker set and per-ticker
+direction. These may differ from the current card and may never be copied backward
+from later evidence.
+Both card and Timeline sentence one expose exact `stance_clause`,
+`mechanism_clause` and per-ticker `stance_realizations`. Review with tags hidden;
+metadata cannot satisfy stance-first.
 
 Backfill may use the full window to find the right company home for older posts.
 That does not grant older events access to later facts. Once published, preserve
@@ -225,7 +277,7 @@ cross-asset portfolio strategy can remain separate with its own stated rationale
 Signals need reviewed relevance and a frozen source/body/date snapshot; a later
 change to the other author's current card must not silently rewrite the Signal.
 
-New packets declare generation policy 3.1 and the fields specified in
+New packets declare generation policy 3.2 and the fields specified in
 [output-contract.md](output-contract.md). Run the validator with history coverage
 and generation-contract checks plus `--require-prose-limit`, and with a baseline
 on continuation. Declare `generation_policy.prose_max_chars: 500`. Older archived

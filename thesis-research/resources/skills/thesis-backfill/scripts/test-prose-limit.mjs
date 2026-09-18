@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {proseLength,validateProseLimit} from './prose-limit.mjs';
+import {composeVisibleProse,proseLength,validateProseLimit} from './prose-limit.mjs';
 import {validatePacket} from './validate-packet.mjs';
 
 const packet = description => ({generation_policy:{prose_max_chars:500},records:[{id:'company',description,events:[]}]});
@@ -25,6 +25,14 @@ test('Named source footer is excluded without truncating or changing the text',(
   assert.equal(proseLength(text),500);assert.equal(errors(input).length,0);
   assert.deepEqual(input,before);
   assert.equal(errors(packet('x'+text)).length,1);
+});
+
+test('Current-card stance and body form one visible passage and share the 500-character limit',()=>{
+  assert.equal(composeVisibleProse('Acme has upside because demand is rising.','Margins are improving.'),'Acme has upside because demand is rising.\n\nMargins are improving.');
+  assert.equal(composeVisibleProse('Acme has upside.','Acme has upside. Demand is rising.'),'Acme has upside. Demand is rising.');
+  const input=packet('b'.repeat(20));input.records[0].stance_sentence='a'.repeat(479);
+  assert.equal(errors(input).length,1);
+  input.records[0].stance_sentence='a'.repeat(478);assert.equal(errors(input).length,0);
 });
 
 test('A baseline preserves unchanged history but cannot exempt a new or rewritten update',()=>{

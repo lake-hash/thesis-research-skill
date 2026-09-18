@@ -82,7 +82,10 @@ ordinary language. Useful attribution and unresolved factual conditions remain.
 
 Longer content opens with a paragraph that summarizes the investment view and
 its key condition/current state. Supporting paragraphs add new information,
-not a second copy of the opening. Name unfamiliar companies and counterparties;
+not a second copy of the opening. The first sentence itself names any company,
+counterparty, product or transaction needed to understand the mechanism; do not
+repair an incomplete `the partnership` or `new products` opening in sentence two.
+Name unfamiliar companies and counterparties;
 explain documents or products briefly. When deleting an unsupported figure, do
 not leave dangling phrases such as "the cited ratio" or "those order figures".
 Use a sourced useful figure with its basis, or state the qualitative mechanism.
@@ -97,7 +100,7 @@ because they repeat the same view; coalesce presentation through the trace while
 preserving their source dates.
 
 Run the canonical packet validator on the final output with history coverage and
-generation contract 3.1 required, then build the presentation manifest. These
+generation contract 3.2 required, then build the presentation manifest. These
 checks catch missing links, duplicated company cards, duplicate first observations,
 primary-source mismatch, future context and historical rewrites;
 they cannot detect an omitted claim that was never recognized or guarantee that

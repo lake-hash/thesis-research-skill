@@ -28,9 +28,10 @@ function sourceMedia(item,sources){
   if(item.visualDependency==='none')need(media.length===0,'No-context visual decision cannot include card media');
   return media;
 }
-function instant(value) {
-  need(text(value) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value), 'Exact source timestamp with timezone required');
-  const ms = Date.parse(value), [y,m,d] = value.slice(0,10).split('-').map(Number);
+function instant(value,precision) {
+  if(precision==='day')need(text(value)&&/^\d{4}-\d{2}-\d{2}$/.test(value),'Day-precision source must use YYYY-MM-DD');
+  else need(text(value) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value), 'Exact source timestamp with timezone required');
+  const ms = Date.parse(precision==='day'?value+'T00:00:00Z':value), [y,m,d] = value.slice(0,10).split('-').map(Number);
   need(m>=1 && m<=12 && d>=1 && d<=new Date(Date.UTC(y,m,0)).getUTCDate() && Number.isSafeInteger(ms) && ms>0, 'Invalid timestamp');
   return ms;
 }
@@ -49,12 +50,12 @@ export function validateCard(card) {
     exactKeys(card.author,['id']); need(text(card.author.id),'Missing author.id'); need(text(card.body),'Empty body');
     need(Array.isArray(card.tickers)&&card.tickers.length>0,'At least one ticker required');
     const symbols=new Set();
-    for(const t of card.tickers){exactKeys(t,['symbol'],['logoUrl']); need(text(t.symbol)&&t.symbol===t.symbol.trim(),'Invalid symbol'); need(!symbols.has(t.symbol.toUpperCase()),'Duplicate symbol');symbols.add(t.symbol.toUpperCase());if(Object.hasOwn(t,'logoUrl'))need(url(t.logoUrl),'Invalid logoUrl');}
+    for(const t of card.tickers){exactKeys(t,['symbol','direction'],['logoUrl']); need(text(t.symbol)&&t.symbol===t.symbol.trim(),'Invalid symbol'); need(!symbols.has(t.symbol.toUpperCase()),'Duplicate symbol');symbols.add(t.symbol.toUpperCase());need(['bullish','bearish','none'].includes(t.direction),'Invalid ticker direction');if(Object.hasOwn(t,'logoUrl'))need(url(t.logoUrl),'Invalid logoUrl');}
     need(Array.isArray(card.media),'media must be array');
     for(const m of card.media){exactKeys(m,['type','coverUrl'],['url']);need(['image','priceChart'].includes(m.type)&&url(m.coverUrl),'Invalid media');if(Object.hasOwn(m,'url'))need(url(m.url),'Invalid media URL');}
     need(!/<\/?[a-z][^>]*>/i.test(card.body),'HTML is not allowed in body');
     const footer=links.split(card.body);need(text(footer.prose),'Body needs prose');
-    need(proseLength(card.body)<=500,'Body exceeds 500 prose characters; rewrite and review before export');
+    need(proseLength(card.body)<=500,'Body exceeds 500 prose characters');
     const seen=new Set();for(const s of footer.links){need(url(s.url)&&links.validLabel(s.label),'Invalid named source link');need(!seen.has(s.url),'Duplicate source URL');seen.add(s.url);}
   }catch(e){errors.push(e.message);}
   return {ok:errors.length===0,errors};
@@ -84,13 +85,12 @@ export function exportCards(input) {
       need(obj(item.review)&&item.review.status==='approved'&&['id','reviewer','method'].every(k=>text(item.review[k])),'Source-first approval record required');
       need(item.eventDisposition===undefined||item.eventDisposition==='update','Source-only, held or unresolved events cannot be product cards');
       need(!item.preparationError,item.preparationError||'Unresolved preparation error');
-      need(item.datePrecision!=='day','Day-only source requires an explicit product time policy; midnight is not a verified timestamp');
       need(['new_thesis','thesis_update'].includes(item.type),'Non-card disposition');
       need(['history_event','current_snapshot'].includes(item.mode),'Explicit card mode required');
       const group=groups.get(tuple(item.internalAuthorId,item.internalThesisKey));
       need(group?.modes.size===1,'Snapshot and history routes cannot be mixed for one thesis');
       need(group.firstEvents.size<=1,'Multiple first archive events for one thesis');
-      if(item.type==='thesis_update'&&group.firstAt)need(instant(item.at)>=instant(group.firstAt),'Update precedes first archive card; historical reconciliation required');
+      if(item.type==='thesis_update'&&group.firstAt)need(instant(item.at,item.datePrecision)>=instant(group.firstAt),'Update precedes first archive card; historical reconciliation required');
       need(item.originStatus && ['new','existing','unknown'].includes(item.originStatus),'Origin metadata required');
       need(['FIRST_OBSERVED','EVIDENCE','REVISE','POSITION','CLOSED','WITHDRAW','REAFFIRM'].includes(item.eventType),'Unknown event type');
       if(input.schemaVersion==='thesis-export-input/1.1')need(item.eventDisposition==='update'&&item.incrementReview?.decision==='update'&&['reason','evidence','condition','correction'].includes(item.incrementReview?.incrementKind)&&text(item.incrementReview?.increment)&&text(item.incrementReview?.reviewId),'Current export needs a reviewed material thesis increment');
@@ -100,17 +100,17 @@ export function exportCards(input) {
       need(item.type!=='thesis_update'||text(item.baselineVersion),'Update baseline version required');
       const authorId=authors.get(item.internalAuthorId);need(authorId,'Unknown backend author mapping');
       const thesisId=assignments.get(tuple(authorId,item.internalThesisKey));need(thesisId,'Missing persisted thesis assignment');
-      const at=instant(item.at);need(text(item.description),'Empty description');
+      const at=instant(item.at,item.datePrecision);need(text(item.description),'Empty description');
       if(input.schemaVersion==='thesis-export-input/1.1'||item.sourceCoverage)validateSourceCoverage(item,sources);
       need(Array.isArray(item.sourceIds)&&item.sourceIds.length>0&&new Set(item.sourceIds).size===item.sourceIds.length&&item.sourceIds.includes(item.primarySourceId),'Primary/source references required');
       const ordered=[item.primarySourceId,...item.sourceIds.filter(id=>id!==item.primarySourceId)];
-      const originals=ordered.map(id=>{const s=sources.get(id);need(s,'Unknown source '+id);need(s.datePrecision!=='day','Day-only source timestamp cannot be exported');need(s.linkAllowed!==false,'Original source link not cleared');return s;});
+      const originals=ordered.map(id=>{const s=sources.get(id);need(s,'Unknown source '+id);need(s.linkAllowed!==false,'Original source link not cleared');return s;});
       need(originals[0].authorIds.includes(item.internalAuthorId),'Primary source is not the thesis author');
       need(originals[0].at===item.at,'Card date must match selected original source');
-      for(const s of originals){const sourceAt=instant(s.at);if(item.mode==='history_event')need(sourceAt<=at,'Future source in dated expression');}
+      for(const s of originals){const sourceAt=instant(s.at,s.datePrecision);if(item.mode==='history_event')need(sourceAt<=at,'Future source in dated expression');}
       need(Array.isArray(item.assetBindings),'Missing reviewed bindings');
       const tickers=[],symbolSet=new Set();
-      for(const b of item.assetBindings){need(obj(b),'Malformed binding');if(b.role==='related')continue;need(['primary','vehicle'].includes(b.role)&&b.verified===true&&text(b.symbol),'Unresolved investment binding');if(b.basis==='alva_proxy')need(text(b.displayNote)&&item.description.includes(b.displayNote),'Alva proxy needs visible disclosure');const key=b.symbol.trim().toUpperCase();need(!symbolSet.has(key),'Duplicate displayed binding');symbolSet.add(key);const t={symbol:b.symbol};if(b.logoUrl!==undefined&&b.logoUrl!==null)t.logoUrl=b.logoUrl;tickers.push(t);}
+      for(const b of item.assetBindings){need(obj(b),'Malformed binding');if(b.role==='related')continue;need(['primary','vehicle'].includes(b.role)&&b.verified===true&&text(b.symbol),'Unresolved investment binding');need(['bullish','bearish','none'].includes(b.direction),'Missing reviewed ticker direction');if(b.basis==='alva_proxy')need(text(b.displayNote)&&item.description.includes(b.displayNote),'Alva proxy needs visible disclosure');const key=b.symbol.trim().toUpperCase();need(!symbolSet.has(key),'Duplicate displayed binding');symbolSet.add(key);const t={symbol:b.symbol,direction:b.direction};if(b.logoUrl!==undefined&&b.logoUrl!==null)t.logoUrl=b.logoUrl;tickers.push(t);}
       need(Array.isArray(item.media),'Explicit media array required');
       const media=item.media.map(m=>{need(obj(m),'Malformed media');return {type:m.type,coverUrl:m.coverUrl,...(m.url===undefined?{}:{url:m.url})};});
       if(input.schemaVersion==='thesis-export-input/1.1')need(JSON.stringify(media)===JSON.stringify(sourceMedia(item,sources)),'Card media does not match accepted expression source images');
@@ -123,7 +123,7 @@ export function exportCards(input) {
       identities.set(key,contentHash);
       entries.push({...item.sourceCoverage?{sourceCoverage:structuredClone(item.sourceCoverage)}:{},cardIndex:cards.length,inputIndex,authorId,internalThesisKey:item.internalThesisKey,thesisId,eventId:item.eventId,originalEventIds:item.originalEventIds||[item.eventId],mode:item.mode,eventType:item.eventType,originStatus:item.originStatus,baselineVersion:item.baselineVersion??null,reviewRecordId:item.review.id,reviewer:item.review.reviewer,reviewMethod:item.review.method,idempotencyKey:key,contentHash,
         sourceRevisions:originals.map(s=>({id:s.id,originalId:s.originalId||s.id,revision:s.revision,authorIds:[...s.authorIds],textSha256:hash(s.text),provenanceSha256:provenanceHash(s),url:s.url,linkLabel:s.linkLabel||s.displayName,at:s.at,attachmentStatus:s.attachmentStatus,attachments:s.attachments||[],...(s.documentProvenance?{document:s.documentProvenance}:{}),...(s.mediaProvenance?{media:s.mediaProvenance}:{})})),incrementReview:item.incrementReview||null,bindingRepair:item.bindingRepair||null,
-        dateBasis:item.dateBasis||'published',episodeId:item.episodeId??null,accountId:item.accountId??null,operation:item.mode==='history_event'?'append_event':'current_snapshot',ingestionStatus:'not_sent'});
+        dateBasis:item.dateBasis||'published',datePrecision:item.datePrecision||null,episodeId:item.episodeId??null,accountId:item.accountId??null,operation:item.mode==='history_event'?'append_event':'current_snapshot',ingestionStatus:'not_sent'});
       cards.push(card);
     }catch(e){holds.push({inputIndex,internalThesisKey:obj(item)?item.internalThesisKey??null:null,eventId:obj(item)?item.eventId??null:null,
       contentReviewStatus:obj(item)?item.review?.status??'unreviewed':'unreviewed',exportStatus:'blocked',reason:e.message});}

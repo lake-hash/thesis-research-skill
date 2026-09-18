@@ -8,7 +8,7 @@ description: Backfill an investor or trader's investment theses from a name, acc
 Turn one person's public statements into a source-backed thesis history that can
 be continued without duplicating or silently rewriting earlier work.
 
-The current generation contract is **3.1**. Read
+The current generation contract is **3.2**. Read
 [generation-contract.md](references/generation-contract.md) before extraction
 and again before delivery. It is part of this skill, not optional product advice.
 
@@ -35,9 +35,9 @@ For the existing Thesis Field Notes playbook, use its requested rolling six-mont
 window unless the user gives another range. Calculate dates from the run cutoff;
 do not reuse the September 2026 example dates as a permanent window.
 
-Use the current authorized workspace. In the Thesis project, verify the root and
-Git common directory are `<workspace>` and its own `.git` before edits.
-Keep local outputs here; do not migrate the task or use the parent Alva checkout.
+Use the current authorized workspace. In a Thesis project, verify the actual
+repository root and its own `.git` before edits. Keep local outputs in that
+workspace; do not migrate the task into a parent repository or unrelated checkout.
 Default output: `backfills/<author-id>/`, with resumable run directories.
 
 When available, read the project's versioned

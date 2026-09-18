@@ -27,27 +27,35 @@ export function validateEventSourceImages(event,record,sourceMap,check,{required
  check(filled(event.visual_dependency_reason),label+' needs a visual dependency reason');
  const primaryIds=new Set(event.source_ids||[]),contextIds=new Set(event.context_source_ids||[]),expressionIds=new Set([...primaryIds,...contextIds]),seen=new Set();
  for(const binding of bindings){
-  const key=binding?.source_id+'|'+binding?.attachment_id;
+ const key=binding?.source_id+'|'+binding?.attachment_id;
   check(binding&&typeof binding==='object'&&!seen.has(key),label+' has duplicate or malformed bindings');seen.add(key);
   const source=sourceMap.get(binding?.source_id),attachment=source?.attachments?.find(a=>a.id===binding?.attachment_id);
-  check(expressionIds.has(binding?.source_id)&&!!attachment,label+' binding is outside the event source/context attachments');
-  check(['include','omit','unrelated'].includes(binding?.disposition),label+' binding needs include or omit disposition');
-  if(['omit','unrelated'].includes(binding?.disposition))check(filled(binding.reason),label+' omitted image needs a reason');
+  const retrievalGap=binding?.disposition==='retrieval_gap';
+  check(expressionIds.has(binding?.source_id)&&(retrievalGap?filled(binding?.attachment_id):!!attachment),label+' binding is outside the event source/context attachments');
+  check(['include','omit','unrelated','retrieval_gap'].includes(binding?.disposition),label+' binding needs include, omit or retrieval_gap disposition');
+  if(['omit','unrelated','retrieval_gap'].includes(binding?.disposition))check(filled(binding.reason),label+' omitted or unavailable image needs a reason');
   if(contextIds.has(binding?.source_id)&&binding?.disposition==='include'){
    check(filled(binding.reason),label+' included context image needs a material-use reason');
-   check((event.support||[]).some(span=>span?.source_id===binding.source_id&&span?.purpose==='context'),label+' included context image needs retained context support');
+   const adopted=(event.support||[]).some(span=>span?.source_id===binding.source_id&&span?.purpose==='context');
+   if(!adopted){
+    check(binding.context_image_role==='explanatory_context',label+' non-adopted context image must be marked explanatory_context');
+    check(event.visual_dependency==='helpful',label+' non-adopted context image can be helpful context but cannot be required evidence');
+   }
   }
  }
  if(record.review?.status!=='approved')return;
  check(event.visual_dependency!=='unresolved',label+' unresolved visual relevance cannot be approved');
- let included=0;
+ let included=0,gaps=0;
  for(const sourceId of expressionIds){
-  const source=sourceMap.get(sourceId);if(!source)continue;
-  if(source.attachment_status==='unavailable')check(event.visual_dependency==='none',label+' unavailable source attachments require visual_dependency none or a hold');
+ const source=sourceMap.get(sourceId);if(!source)continue;
+  const sourceGap=bindings.some(binding=>binding?.source_id===sourceId&&binding?.disposition==='retrieval_gap');
+  if(source.attachment_status==='unavailable')check(event.visual_dependency==='none'||event.visual_dependency==='helpful'&&sourceGap,label+' unavailable source attachments require visual_dependency none, a helpful retrieval gap or a hold');
   for(const attachment of source.attachments||[])check(seen.has(sourceId+'|'+attachment.id),label+' does not account for '+sourceId+'/'+attachment.id);
  }
  included=bindings.filter(b=>b?.disposition==='include').length;
- if(['required','helpful'].includes(event.visual_dependency))check(included>0,label+' '+event.visual_dependency+' visual context needs an included image');
+ gaps=bindings.filter(b=>b?.disposition==='retrieval_gap').length;
+ if(event.visual_dependency==='required')check(included>0,label+' required visual context needs an included image');
+ if(event.visual_dependency==='helpful')check(included>0||gaps>0,label+' helpful visual context needs an included image or explicit retrieval gap');
  if(event.visual_dependency==='none')check(included===0,label+' visual_dependency none cannot include images');
 }
 

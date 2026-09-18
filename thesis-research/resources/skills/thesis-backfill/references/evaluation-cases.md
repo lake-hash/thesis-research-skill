@@ -7,10 +7,10 @@ the structural validator as a semantic evaluator.
 Run the deterministic [guard tests](../scripts/test-validator.mjs) with
 `node --test <skill-root>/scripts/test-validator.mjs`.
 The [prototype sample check](../scripts/check-prototype-sample.mjs) imports the
-available archived AEHR sample into generation contract 3.1 and writes a temporary
-held packet and presentation manifest. It is
+available archived AEHR sample into a temporary held compatibility packet. It is
 local-only, performs no new network retrieval, and does not approve or publish
-the imported record. Run it from the installed skill or repository source.
+the imported record. It is not a generation-3.2 behavioral proof. Run it from the
+installed skill or repository source.
 
 | Input situation | Expected decision boundary |
 |---|---|
@@ -25,7 +25,7 @@ the imported record. Run it from the installed skill or repository source.
 | A person sells a memory ETF and prefers a supplier | Separate investment-vehicle change from underlying industry belief |
 | A gold argument names no ETF | Gold view; optional explicit Alva GLD proxy, not a disclosed author holding |
 | A standalone post says large positions are unattractive before several policy events but names no security | Triage `no_judgment`; omission ledger only, with no thesis/setup/context record |
-| A short reply omits the ticker but its verified parent is an existing company thesis | May inherit that company object; preserve the parent as context and do not infer from topic similarity alone |
+| A short reply omits the ticker but its verified parent names the company | May use the parent to resolve identity, but the final update must store its own verified ticker and direction |
 | One post compares several named securities and the prose discusses each one | One expression may carry every verified ticker; mention every object in prose and tag each one instead of keeping only the first |
 | A source contains many tickers but the generated company paragraph uses only one section | Bind only the ticker(s) used by that paragraph; the other sections remain separate context or theses |
 | The current post has no image but quotes a chart that explains the accepted why | Include the exact quoted-context attachment with provenance and a material-use reason |
@@ -37,6 +37,15 @@ the imported record. Run it from the installed skill or repository source.
 | Model output is empty or covers only half a batch | Resume missing sources; no silent no-judgment classification |
 | A candidate has elegant prose but wrong speaker or unsupported number | Hold/revise, never approve from a total confidence score |
 | A long entry has blank lines but its first paragraph only names the topic | Revise: opening must summarize the judgment and material condition; formatting alone is insufficient |
+| `Zoetis looks unattractive` | Reject the bare label; require an immediate source-backed mechanism |
+| `Zoetis looks unattractive as poor capital allocation compounds a deteriorating outlook` | Valid when source-backed and not overused across the feed |
+| `Amazon looks vulnerable because the case for a higher valuation is limited` | Reject circular case language; state the operating or valuation mechanism directly |
+| `Sandisk is well positioned as the NAND outlook is supported` | Reject passive support language; name the demand, supply or pricing driver |
+| `Nebius is well positioned as the partnership could expand distribution. Palantir named Nebius its preferred partner.` | Revise: sentence one must name Palantir and the partnership's investment mechanism; sentence two cannot repair an incomplete opening |
+| `Robinhood is strengthening as new products diversify revenue. New products and services could support growth.` | Revise: identify the products in sentence one and replace the second-sentence echo with distinct evidence, condition or risk |
+| `Apple and Snap could benefit if Apple bought Snap's Specs business... Neither company has announced a deal.` | Valid when source-backed: sentence one contains the parties, transaction and mechanism; the follow-up adds transaction-stage risk |
+| One family such as `well positioned` dominates the catalog | Create corpus editorial review; do not auto-rotate synonyms or add unsupported mechanisms |
+| Released README says `local candidate`, or Signals note says eight while rendering zero | Fail release consistency |
 | A short complete view is padded to satisfy a two-paragraph template | Keep one paragraph; no minimum length or paragraph quota |
 | An update says "the absence of a guidance increase is retained" | State that guidance did not rise and explain why it matters; move process narration out of reader copy |
 | Timeline displays "Additional evidence" or an event headline | Fail presentation review: use date, body preview, ticker logos and source; types remain internal |
@@ -73,7 +82,7 @@ Inspect its produced records for attribution, omissions, merges, entity mapping,
 temporal leakage and prose. Report what was actually tested and any untested live
 retrieval/coverage limitations.
 
-## Generation 3.1 Regressions
+## Generation 3.2 Regressions
 
 - Sivers lasers, wireless and sensing: one author-company thesis with all source
   claims retained. LPKF glass, solar and quantum: the same grouping rule.

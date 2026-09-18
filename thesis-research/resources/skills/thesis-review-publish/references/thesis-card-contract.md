@@ -8,8 +8,8 @@ remains explicit legacy compatibility, not current evidence certification. Follo
 The seven public card fields below are unchanged.
 
 Product source: https://app.notion.com/p/3d8c6bac30df8007907cccdc5d62ebb7
-Checked 2026-09-15 against the updated Notion page. This is an adapter contract, not a deployed backend API.
-Use alongside generation policy 3.1, not instead of its source/claim validation.
+Checked 2026-09-18 against the updated Notion page. This is an adapter contract, not a deployed backend API.
+Use alongside generation policy 3.2, not instead of its source/claim validation.
 
 ## Three separate outputs
 
@@ -30,10 +30,11 @@ run ID, raw review reason or account metadata leaks into this object.
 | --- | --- |
 | thesisId | Positive safe integer supplied in a persisted feed allocation map, scoped to author.id. Never an array index, model number or global counter. |
 | type | Explicit `new_thesis` or `thesis_update`; not sentiment, lifecycle event type or thesis/setup classification. |
-| createdAtMs | Adapter's explicit time policy: timestamp of this card's original expression, converted to milliseconds. Actual ingestion/publication times remain separate. |
+| createdAtMs | Unix-millisecond timestamp for this card's own creation/publication expression. A new Thesis uses its accepted first expression; a `thesis_update` uses the newer update expression. Never reuse the original Thesis timestamp for an update, and never substitute the batch run time. |
 | author.id | Resolve local author_id through an explicit authoritative author map. Do not assume a handle equals a Persons ID or X numeric ID. |
-| body | Nonempty Markdown: full reviewed description followed by named original links. Update prose and links belong to that dated event, never today's company summary. |
+| body | Nonempty Markdown followed by named original links. A current Thesis body begins with the reviewed `stance_sentence`, then its supporting description. An update body is that dated event's already stance-first description. The complete visible prose is at most 500 characters before links. |
 | tickers | Reviewed primary/vehicle bindings relevant to this expression, in display order. No related-only mentions. At least one unique symbol. Preserve listing suffix. |
+| tickers[].direction | Required per ticker. Exactly `bullish`, `bearish` or `none`; `none` means the ticker is related to the expression but has no clear positive or negative direction. |
 | tickers[].logoUrl | Verified matching icon or verified fallback, otherwise omit. A missing logo does not block the thesis. |
 | media | Ordered image/priceChart entries. Original post images are derived from reviewed `required` or `helpful` attachment bindings. Each needs an actual coverUrl; url is optional. Use [] when visual dependency is `none`, even if decorative/redundant source images exist. Missing/unavailable images block only required/helpful visual context; never invent or borrow media. |
 
@@ -83,10 +84,12 @@ Source revisions are tracked separately. Reviewed corrections require a versione
 correction operation; this exporter does not mutate published history.
 
 `new_thesis` is treated here as the first persisted archive card, not proof of
-novelty. Keep originStatus `new|existing|unknown` separately. This interpretation
-and expression-time `createdAtMs` need backend/product acknowledgement because
-the PRD also calls createdAtMs card creation/publication time. The exporter requires
-an explicit `timePolicy: expression_time` so the choice is never implicit.
+novelty. Keep originStatus `new|existing|unknown` separately. The feed field is
+the card's creation/publication timestamp for the accepted expression: the first
+expression for a new Thesis and the current expression for an update. Keep batch
+ingestion, review and publication-run timestamps in the manifest, not in the
+ThesisCard. The normalized export input must declare the selected timestamp
+policy explicitly so a rerun cannot silently move a card in time.
 Unknown or day-only times are held rather than fabricated as midnight. A caller
 must resolve a documented product policy before exporting such records.
 This includes timestamps ending in midnight when `datePrecision: day` survives
@@ -152,7 +155,7 @@ expected on retries. Exported does not mean ingested, published or notified.
 
 ## Prepared Output And Playbook Reader
 
-For a validated generation-3.1 packet, use the preparation adapter rather than
+For a validated generation-3.2 packet, use the preparation adapter rather than
 manually rebuilding the seven product fields:
 
 ```bash
@@ -173,6 +176,38 @@ group identities, aliases, assets and Signals. Metadata never becomes extra
 fields inside a ThesisCard. The reader groups by `(author.id, thesisId)`, keeps
 historical bodies intact and suppresses the main source's duplicate Timeline row.
 If a current snapshot is held, do not silently promote a historical card to fill it.
+
+### Feed Responsibility Boundary
+
+The Thesis skills own the seven-field cards and their evidence-bound values. The
+Feed owns visual and interaction behavior: opening a thesis and its Timeline,
+source-link interaction, typography, image sizing and optional image zoom/lightbox.
+Do not rebuild those behaviors in an author backfill unless the user explicitly
+requests a separate UI artifact.
+
+For the current Feed treatment:
+
+- render one ticker item for each unique `tickers[]` entry and use at most its one
+  matching `logoUrl`;
+- show an upward trend icon for `bullish`, a downward trend icon for `bearish`, and
+  no direction icon for `none`; do not display the enum words;
+- keep each card's ordered `media[]` local to that exact expression. Use
+  `coverUrl` for the preview and `url` as the optional full asset; never borrow
+  media from another update or thesis;
+- group cards by `(author.id, thesisId)`, sort historical updates by their own
+  `createdAtMs`, and suppress only the history event identified as the current
+  snapshot's event in the manifests.
+
+Validate the prepared bundle before Feed handoff:
+
+```bash
+node skills/thesis-review-publish/scripts/project-thesis-feed.mjs playbook-data.json feed-projection.json
+node --test skills/thesis-review-publish/scripts/test-feed-projection.mjs
+```
+
+This projection validates data ownership and grouping. It does not claim that a
+particular frontend rendered the intended controls; the Feed repository should
+cover those components with its own UI tests.
 
 `allocatePreviewIds` provides **local-preview-only** persistent numeric IDs. It
 retains removed allocations and cannot modify a production map. The manifest

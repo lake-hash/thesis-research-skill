@@ -20,6 +20,13 @@ gaps from false statements and screening candidates from confirmed defects.
 After formatting, require the sourceCoverage delivery check against the untouched
 manifest; do not approve a formatter that loses a link while keeping its claim.
 
+Apply [Source Fidelity Contract 1.0](../references/source-fidelity-contract.md).
+For every visible sentence, reconstruct the source tuple before approving it.
+Fail any new actor, possessor, ranking, superlative, certainty upgrade, condition
+or time scope. In particular, reject `the author`, `the author's`, `according to
+the author`, `the source`, `the post` and similar public narration unless the
+source itself explicitly makes that relationship the investment subject.
+
 The agent owns source/content review; do not require manual candidate approval.
 Publish passing candidates when the user has authorized the batch. Do not hand
 raw transcripts or evidence problems to the user as approval tasks. After failed
@@ -48,9 +55,41 @@ update. Reject action/price/performance-only updates and company/theme leakage.
 Require a visual-dependency decision and include only images that materially help
 explain the event. An unavailable image blocks only a required visual claim.
 
-Reject technical-analysis and trade-setup expressions from the public product,
+For every main card and Timeline update, independently verify its own ticker set
+and one `bullish`, `bearish` or `none` direction per ticker against exact source
+evidence. Ticker sets and directions may differ across dates. Neutral requires a
+source-supported balanced view; unresolved does not become neutral. Record these
+directions in the final sidecar and verify that the visible first sentence is the
+matching natural stance sentence, not a tag or metadata label. Hide all ticker
+tags, direction words and icons during this check: sentence one alone must still
+make every ticker's direction and why clear. Then review the body for clear, varied,
+non-template language. The first sentence must make the direction, final investment landing and decisive source-backed mechanism immediately visible. It must name any counterparty, product or transaction needed to understand the relationship. The first body sentence must add distinct evidence, causality, condition or risk rather than paraphrase the opening. Public prose must not copy Bullish/Bearish/Neutral enum words, and delayed direction is invalid. Reject a batch that repeats one template or an opening that stops at a product, partnership, framework, policy event or operating fact and leaves the reader asking what it means for the investment. Do not infer long/short exposure from a general bullish/bearish assessment.
+Apply `source-backed-opening/1.3` and record `opening_family`, `judgment_axis`,
+the exact `stance_clause`, exact `mechanism_clause`, one exact
+`stance_realizations` row per ticker, `metadata_hidden_direction_clear`,
+`specific_directional_state`, `mechanism_visible_early`, `professional_voice`,
+`natural_collocation`, `non_tautological`, `non_template`, `relationship_complete`
+and `continuation_advances`. Generic
+bare or mechanism-free attractive/unattractive and `the case is strong/weak`
+wording fails. Mechanism-specific attractive/unattractive remains valid but enters
+the same corpus concentration review as every other family. Visible prose never
+copies Bullish/Bearish/Neutral metadata words. Read the feed in order for
+corpus concentration, but send concentrated families to editorial review rather
+than automatically rewriting them. Do not infer long/short exposure from a
+general bullish/bearish assessment.
+
+Run two explicit adversarial checks. First, remove all buying, selling, holding,
+entry, allocation, margin and return language; reject the row as source-only when
+no independent fundamental increment remains. Second, substitute a peer company
+for the named company; reject or reroute the row when the why remains generic,
+thematic or adjacent financing/policy context. Do not approve portfolio
+diversification as a company update.
+
+Reject technical-only analysis and trade-setup expressions from the public product,
 including support/resistance, targets, stops, entry/exit levels, moving averages,
-breakouts, chart patterns, momentum, relative strength and option timing.
+breakouts, chart patterns, momentum, relative strength and option timing. Mixed
+content may pass only when an independently supported non-technical what and why
+would still qualify after removing the technical material.
 Reject objective revenue, guidance, backlog, news and price facts when the author
 does not state their investment implication or how they change the thesis.
 
@@ -64,11 +103,14 @@ why-bearing source; if the record has none, remove it from public output.
 
 Inventory and review attachments on both expression and context sources, including
 the full quote/reply chain even when the current post has no attachment or image
-keyword. Approve a quoted/reply
-image only when the author relies on that context, a `purpose: context` support
-span is retained, and the image adds material explanation beyond the current
-author’s own images. Reject automatic inheritance, duplicate charts, old trade
-screenshots that do not explain the current view, and any attribution flattening.
+keyword. A quoted/reply image may be approved as helpful
+`explanatory_context` without explicit author adoption when it is directly relevant
+and materially clarifies a Thesis/Update whose what and why are already independently
+supported. Require the context source ID, exact attachment, concrete relevance
+reason and correct outside-source attribution. It cannot establish or alter what,
+why, ticker or direction. `Required` still needs explicit author reliance plus a
+retained `purpose: context` span. Reject automatic inheritance, duplicate charts,
+old trade screenshots that do not explain the current view, and attribution flattening.
 If the archive has a media key but no image URL, record a retrieval gap rather
 than approving an omit. Use `helpful_retrieval_pending` when the accepted prose
 relies on the context's chart, document, technical or operating evidence; otherwise
@@ -95,8 +137,10 @@ verified thread-inherited investable object/ticker. Reclassify its source as
 `records`, or invent an ETF/proxy. Existing-company updates may inherit the object
 only from verified conversational context or the matched company history.
 
-Reject new or rewritten thesis/update prose above 500 characters. Count spaces,
-punctuation and paragraph breaks; exclude the trailing named-original-link footer.
+Reject new or rewritten visible thesis/update prose above 500 characters. For a
+current Thesis, count `stance_sentence + description` exactly as it will appear in
+Feed body; for Timeline, count its description. Count spaces, punctuation and
+paragraph breaks; exclude the trailing named-original-link footer.
 Require `generation_policy.prose_max_chars: 500` and `--require-prose-limit` in
 packet validation. Check that shortening retained the decisive reason, necessary
 conditions, amounts/units and historical transaction periods. Do not approve
@@ -112,10 +156,11 @@ problem, record the exact span and what a reader would have to guess.
   Would Horizon 1 or PSUS mean anything to a reader arriving on this screen?
 - Does the text describe the specific act or arrangement behind execution, capacity,
   secured power, monetization or opportunity?
-- Does the opening communicate a judgment and its useful reason? Do later sentences
-  add information and connect naturally, without repeating the conclusion?
-- Does the first sentence state the directional investment conclusion and decisive
-  reason together, rather than making the reader wait through background facts?
+- Does the opening communicate a judgment, useful reason and necessary named
+  relationship without relying on the next sentence? Does each later sentence
+  add evidence, causality, condition or risk without repeating the conclusion?
+- Does the first sentence lead with the directional investment conclusion and state
+  the final landing, rather than stopping one step early at a background fact?
 - Can the same meaning be expressed more directly? Do not add length for its own
   sake, replace necessary financial terms with inaccurate simplifications, or pad
   a simple transaction with a stock analysis.
@@ -172,14 +217,40 @@ Pass 3: Review the final public projection after grouping and overrides.
 - Read every visible main card and Timeline row with its exact final source, date,
   ticker tags and selected media. Record explicit what and why; for Timeline,
   record the material reason/evidence/condition/correction increment.
-- Write a `final-public/1.0` sidecar bound to the exact presentation hash. Do not
+- Write a `final-public/1.3` sidecar bound to the exact presentation hash. Do not
   generate an all-pass sidecar in an assembly loop. Any visible change invalidates
   the sidecar and returns affected expressions to review.
+- When deterministic corpus checks report concentrated opening families, add a
+  top-level `opening_distribution_review` with contract, reviewer, reviewed_at,
+  warning_count, decision and reason. Review the flagged cards in feed order; do
+  not authorize automatic synonym rotation.
 - Delivery fails when any visible expression lacks direct voice, source fidelity,
   complete ticker/media decisions or its one matching source/date pair.
 - Review every visible expression. Record `review_scope: all_visible_expressions`
   and exact total/completed counts equal to final cards plus Timeline rows. A
   sample, changed-only pass or known-example pass cannot approve delivery.
+- Record `company_specific_increment`, `portfolio_operation_free`,
+  `process_language_free`, `prose_coherent`, `repetition_free`,
+  `related_context_excluded` and `why_specific` as independent booleans. Also
+  record `relationship_complete` and `continuation_advances` for every card.
+  `relationship_complete` means sentence one names the relationship needed to
+  understand the mechanism; `continuation_advances` means the first body sentence
+  adds evidence, causality, condition or risk rather than paraphrasing the opening.
+  Also
+  record `why_complete_sentence`, `objective_fact_only`, `why_mechanism_type` and
+  source-specific `ticker_roles`. Only subject/vehicle tickers may render as tags.
+  A generic fundamental label cannot substitute for these decisions.
+- For every Timeline row record `timeline_opening_contract:
+  source-backed-timeline-opening/1.2`, exact `stance_clause`, exact
+  `mechanism_clause`, per-ticker `stance_realizations`,
+  `metadata_hidden_direction_clear`, `direction_visible_immediately`,
+  `mechanism_visible_immediately`, `relationship_complete` and
+  `continuation_advances`. Sentence one must contain that date's conclusion and
+  mechanism. Reject delayed implications, unnamed relationships, present-day
+  card language imported into history, and a follow-up sentence that merely
+  paraphrases the opening.
+- Require one non-candidate `release_version`. Published readback additionally
+  requires `release_status: released` across packet, presentation and sidecar.
 
 Return approve, revise or hold with specific findings. Mark `reader_clarity`,
 `source_coverage` and `primary_anchor` pass only after these checks. Do not average
@@ -202,8 +273,20 @@ identity, revision and expression date before approving `disclosure_groups`.
 Review the rendered exclusions as well as the retained updates. Do not approve a
 current card anchored on source-only or held material.
 
-For product export, output seven fields with no sources/source/title field. Append
-named original Markdown links at the end of body, e.g. [Beth Kindig on X](URL),
+For product export, verify the exact seven-field ThesisCard shape:
+`thesisId`, `type`, `createdAtMs`, `author`, `body`, `tickers`, `media`.
+Reject any card containing `title`, `source`, `sources`, review metadata, status,
+confidence, run metadata or account metadata. `type` must be exactly
+`new_thesis` or `thesis_update`. `createdAtMs` must belong to the card's own
+accepted expression; an update must not reuse the first Thesis timestamp.
+`author` must contain only the authoritative stable `id`. `tickers` must be a
+non-empty display-ordered list of unique symbols. Product direction is exactly
+`bullish`, `bearish` or `none`; map an internally reviewed neutral/balanced view
+to `none`, and never emit `neutral` in the product object. `media` must always be
+present, with ordered `image` or `priceChart` entries requiring `coverUrl` and
+allowing `url`; use `[]` when no approved media exists.
+
+Append named original Markdown links at the end of `body`, e.g. [Beth Kindig on X](URL),
 [Acquired Podcast](URL), or [NVIDIA Earnings Call](URL). Use short author/channel,
 program or issuer names, not bare domains, generic "Source", "Click here", HTML,
 arrows or long headlines. Separate links with spaces, deduplicate URLs and retain

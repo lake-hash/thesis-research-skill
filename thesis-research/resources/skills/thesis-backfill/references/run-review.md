@@ -1,8 +1,8 @@
 # Current-Run Review And Batch Gates
 
 Apply this contract to every new backfill or changed candidate before preparing
-product output. It supplements generation 3.1 with
-`generation_policy.review_contract: source-first/1.0` and
+product output. It supplements generation 3.2 with
+`generation_policy.review_contract: source-first/1.1` and
 `generation_policy.prose_max_chars: 500`. Old packets remain readable through
 `validate-packet.mjs`; reading an archive is not approval to export it again.
 Do not remove policies or invoke older adapters to bypass a failed current gate.
@@ -28,16 +28,45 @@ uncertain candidates. Sample rejected/context sources across dates/channels for
 omissions; exact duplicates and unchanged cached decisions do not need repeated
 full prose review.
 
+Source-first review additionally reconstructs the source-fidelity tuple for every
+visible claim. Fail new actors, possessives, rankings, superlatives, certainty
+upgrades, conditions or time scope that are not supported by the exact original.
+Public prose must not introduce `the author`, `the author's`, `according to the
+author`, `the source`, `the post` or similar provenance narration.
+
 For every approved active record, store `source_first_review`:
 
 ```json
 {
-  "version": "source-first/1.0",
+  "version": "source-first/1.1",
   "reviewer": "actual reviewing agent or attempt ID",
   "method": "source_first",
   "reviewed_at": "ISO timestamp of this review",
   "input_sha256": "reviewInputHash(packet, record)",
-  "reader": {"decision": "clear", "reason": "Specific reader assessment", "conclusion_first": true, "opening_conclusion": "The directional investment conclusion", "opening_reason": "The decisive reason stated in the first sentence"},
+  "reader": {
+    "decision": "clear",
+    "reason": "Specific reader assessment",
+    "conclusion_first": true,
+    "opening_conclusion": "The directional investment conclusion",
+    "opening_reason": "The decisive reason visible in the opening chain",
+    "opening": {
+      "contract": "source-backed-opening/1.3",
+      "opening_family": "company_state",
+      "judgment_axis": "capital_allocation",
+      "stance_clause": "Acme is strengthening",
+      "mechanism_clause": "because demand is expanding",
+      "stance_realizations": [{"ticker": "ACME", "stance": "bullish", "text_span": "Acme is strengthening"}],
+      "metadata_hidden_direction_clear": true,
+      "specific_directional_state": true,
+      "mechanism_visible_early": true,
+      "relationship_complete": true,
+      "continuation_advances": true,
+      "professional_voice": true,
+      "natural_collocation": true,
+      "non_tautological": true,
+      "non_template": true
+    }
+  },
   "claim_reviews": [{
     "claim_id": "ID from card_claims",
     "decision": "supported",
@@ -48,6 +77,17 @@ For every approved active record, store `source_first_review`:
     "event_id": "historical event ID",
     "decision": "update",
     "content_domain": "fundamental | mixed | technical_only",
+    "what": "The dated judgment reconstructed from the source",
+    "why": "The dated reason reconstructed from the source",
+    "what_evidence": [{"source_id": "original ID", "quote": "Exact passage", "explanation": "Why it supports what"}],
+    "why_evidence": [{"source_id": "original ID", "quote": "Exact passage", "explanation": "Why it supports why"}],
+    "ticker_stances": [{"ticker": "ACME", "stance": "bullish"}],
+    "timeline_opening_contract": "source-backed-timeline-opening/1.2",
+    "stance_clause": "Acme is strengthening",
+    "mechanism_clause": "because demand is expanding",
+    "stance_realizations": [{"ticker": "ACME", "stance": "bullish", "text_span": "Acme is strengthening"}],
+    "metadata_hidden_direction_clear": true,
+    "non_technical_why": "Required when content_domain is mixed",
     "fundamental_increment": "Required when mixed content remains public",
     "reconstructed_meaning": "What was expressed at this date",
     "reason": "Actual increment, earlier repetition, or missing context",
@@ -60,11 +100,14 @@ Each `card_claims` evidence span needs a matching reviewed span and explanation.
 Event decisions must match `timeline_review`: `update`, `source_only`, or `hold`.
 Keep source-only and held material private. Unverifiable interviews still follow
 the transcript fallback and skip rules; they do not become user approval tasks.
+Every approved record review also repeats the record's public `ticker_stances`.
+The reviewed ticker set and directions must exactly match the source-bound record.
 
 After completing review, use the exported `reviewInputHash` from
 `scripts/run-review-contract.mjs` to bind it to the exact packet/record inputs.
-The function only calculates a digest; it does not approve anything. A prose,
-source, date, grouping, historical, Signals or review-context change invalidates
+The function only calculates a digest; it does not approve anything. The digest
+includes `generation_policy` and the record's `opening_plan`. A prose, policy,
+opening-plan, source, date, grouping, historical, Signals or review-context change invalidates
 the previous record. Re-read affected evidence and revise findings before updating
 the digest. Never generate all-pass reviews in an assembly loop, copy another
 claim's explanation, or treat `test-review-fixture.mjs` as a production helper.
@@ -159,7 +202,7 @@ source links, Timeline and Signals to this reviewed packet; legacy prototype
 adapters must not lose these decisions. Render the actual changed UI when requested.
 Do not report a batch complete based only on per-author checks or structural tests.
 
-Then review the assembled presentation under `final-public/1.0`. Follow
+Then review the assembled presentation under `final-public/1.3`. Follow
 [the final projection contract](final-public-projection.md) and run
 `scripts/final-public-projection.mjs` with the packet, presentation and separately
 authored review sidecar. A source-first record review does not substitute for this
@@ -167,3 +210,7 @@ pass because grouping and overrides can change the actual reader-facing copy.
 The sidecar must declare `review_scope: all_visible_expressions` and exact
 total/completed counts equal to cards plus visible Timeline rows. Sampling,
 changed-only review and known-example checks are insufficient.
+
+Before release, run `scripts/release-consistency.mjs` against the final catalog
+and README. Released documentation cannot describe a local candidate, and a
+numerical Signals claim must equal the Signals actually rendered.

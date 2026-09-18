@@ -91,6 +91,25 @@ Each reviewed or held record:
   "author_id": "author-1",
   "type": "thesis",
   "question": "The stable investment question, not the display headline",
+  "stance_sentence": "Acme is strengthening as recurring demand raises utilization.",
+  "ticker_stances": [{
+    "ticker": "ACME",
+    "stance": "bullish",
+    "evidence": [{"source_id": "source-1", "quote": "Exact source text", "explanation": "Why this supports the direction"}]
+  }],
+  "opening_plan": {
+    "version": "source-backed-opening/1.3",
+    "subject": "Acme",
+    "stance": "bullish",
+    "judgment_axis": "demand",
+    "directional_state": "strengthening",
+    "mechanism": "Recurring customer demand raises utilization.",
+    "stance_clause": "Acme is strengthening",
+    "mechanism_clause": "as recurring demand raises utilization",
+    "stance_realizations": [{"ticker": "ACME", "stance": "bullish", "text_span": "Acme is strengthening"}],
+    "mechanism_location": "same_sentence",
+    "opening_family": "company_state"
+  },
   "description": "The latest source-supported assessment and its reason, written as continuous prose.",
   "assessment_as_of": "2026-09-09",
   "origin": {"status": "unknown", "source_ids": []},
@@ -119,6 +138,22 @@ paragraph; longer entries use a summary-first paragraph followed by supporting
 paragraphs separated by blank lines (`\n\n`). There is no separate visible title,
 Summary label or bold lead; all paragraphs share typography. Do not impose a
 fixed word cap or pad short content to create multiple paragraphs.
+For approved public thesis records, `ticker_stances` exactly matches the displayed
+ticker set. Every ticker has one `bullish`, `bearish` or `none` value with exact
+source evidence and an explanation. `stance_sentence` is the internal stance-first
+memo line. Product export prepends it to `description` to form one visible body,
+and the combined passage must fit 500 characters. Neutral means the source supports a balanced view;
+an unresolved direction is held rather than assigned a synthetic value.
+
+The presentation manifest exposes only `{ticker, stance}`. This research contract
+does not own Feed layout, navigation, typography, image sizing or lightbox behavior.
+For Thesis Feed handoff, map each unique ticker to one product ticker entry and use
+the product direction `bullish`, `bearish` or `none`; see the
+[ThesisCard contract](../../thesis-review-publish/references/thesis-card-contract.md).
+The current Feed rendering agreement shows a rising trend icon for `bullish`, a
+falling trend icon for `bearish`, and no direction icon for `none`. It does not
+render the enum words Bullish, Bearish or Neutral. These are Feed presentation
+requirements, not permission to change source-backed prose or duplicate logos.
 
 The `title` field is forbidden on thesis and event records, including empty,
 null, optional and internal compatibility values. Older packets with titles
@@ -131,10 +166,10 @@ Apply the professional-English and process-narration rules in `quality-rules.md`
 
 Types: `thesis`, `setup`, `context`. Review: `approved`, `hold`, `revise`.
 `setup` remains readable for legacy/private history, but new public packets using
-`fundamental_company_only/1.0` cannot approve or export it.
+`source_grounded_company_analysis/1.0` cannot approve or export technical-only content.
 Main records belong to `subject_id`. Preserve joint signatories in source
 attribution and outward bylines; other speakers belong in Signals/context sources.
-Legacy standalone setups have a stable `episode_id`. Under generation policy 3.1,
+Legacy standalone setups have a stable `episode_id`. Under generation policy 3.2,
 new company records use `type: thesis`, including technical views, and trade events
 carry their own `episode_id` and `account_id`. Never fabricate a business rationale
 for a technical view or collapse distinct episodes into one continuous position.
@@ -148,7 +183,7 @@ are optional. Keep price reference dates and units when provided.
 `compared_ids` can reference current packet records or supplied baseline/catalog
 IDs. Include the closest company matches and the resolved identity. Exact duplicate
 questions and multiple active company records for the same author are structural
-errors under generation policy 3.1. Different business mechanisms do not justify
+errors under generation policy 3.2. Different business mechanisms do not justify
 different company records. Aliases and issuer resolution still need source review.
 When merging old records, retain their IDs and events with `superseded_by`
 pointing to the active record. Resolve that relationship when displaying combined
@@ -165,12 +200,15 @@ requires a visible note saying it was selected by Alva and is not author-named.
 Use context/hold when the identity is unresolved. Do not fake a ticker to pass.
 
 Events: `{id, type, canonical_event_id, at, date_basis, source_ids,
-description, support, action, visual_dependency, visual_dependency_reason,
+description, support, asset_bindings, ticker_stances, action, visual_dependency, visual_dependency_reason,
 media_bindings, revision_of_event_id?}`.
 - No `title` field is accepted, even as internal metadata.
 - `description`: full continuous prose about the view at the event's date.
   Expanded presentation does not repeat `title` as a heading. Keep source material
   accessible and hide origin-unknown labels without deleting origin metadata.
+- Every visible event has at least one event-specific ticker and one source-backed
+  `bullish`, `bearish` or `none` direction per ticker. Do not inherit either
+  list from the current record.
 - `date_basis`: `spoken`, `published`, or `unknown`; `at` matches the selected
   original source date, including its precision. Unknown dates are null.
 - `support`: `[{source_id, quote, purpose}]`, with exact contiguous source text.
@@ -186,7 +224,7 @@ media_bindings, revision_of_event_id?}`.
   concrete `visual_dependency_reason`. Approved events cannot remain unresolved.
 - `media_bindings` covers every attachment on the event's expression and reviewed
   context sources.
-  Each entry is `{source_id, attachment_id, disposition, reason?}` with
+  Each entry is `{source_id, attachment_id, disposition, reason?, context_image_role?}` with
   `disposition: include|omit` (`unrelated` is legacy-compatible). `omit` needs a
   reason. Required/helpful events include at least one useful image; none includes
   none. Unavailable attachments block required visual claims. A helpful context
@@ -195,11 +233,16 @@ media_bindings, revision_of_event_id?}`.
   cannot claim attachment completeness. Other unknown images use
   `unresolved_retrieval_pending`. Neither status is an omit decision. Product media
   is derived from included bindings; it is not handwritten separately.
+  Use `context_image_role: explanatory_context` for a relevant quoted/reply image
+  that helps explain context without being adopted as the author's evidence.
 
-An included binding from `context_source_ids` must carry a specific reason and
-the event must retain a `support` span with `purpose: context` from that source.
-This allows a quoted/reply image to explain the author's own view without
-misattributing the quoted post. A context image is omitted when the current author
+An included binding from `context_source_ids` must carry a specific reason.
+When the author explicitly adopts that context, retain a `support` span with
+`purpose: context`. Without explicit adoption, the binding may still be included
+as helpful media with `context_image_role: explanatory_context`, provided the
+author's own source independently supports what, why, ticker and direction. This
+image explains context; it is not evidence of the tracked author's view and cannot
+be marked `required`. A context image is omitted when the current author
 image already explains the point, the image only documents an old trade, or it is
 merely topically related.
 
@@ -212,7 +255,7 @@ For an explicitly authorized source-faithful historical copy correction, retain 
 entry with `event_id`, `previous_title`, `previous_description`, `reason` and
 `reviewed_at`. The baseline validator allows such reviewed language changes but
 rejects changes to historical source IDs, support, action, date or event identity.
-Generation policy 3.1 additionally requires `--allow-editorial-corrections` for
+Generation policy 3.2 additionally requires `--allow-editorial-corrections` for
 that operation. Ordinary continuation rejects historical copy changes even if a
 revision note is supplied. Do not turn on the flag without user authorization.
 
@@ -273,24 +316,41 @@ URL is authentic, a quoted statement means what the summary claims, a security
 mapping is economically appropriate, or every duplicate was found. Those are
 required source-first review tasks. Passing the script is not auto-publication.
 
-## Generation Policy 3.1 Extension
+## Generation Policy 3.2 Extension
 
 New runs keep `schema_version: "1.0"` for interchange compatibility and declare:
 
 ```json
 "generation_policy": {
-  "version": "3.1",
+  "version": "3.2",
   "grouping": "author_company",
   "history": "append_only",
-  "public_scope": "fundamental_company_only/1.0",
+  "public_scope": "source_grounded_company_analysis/1.0",
   "timeline_preview_words": 40,
-  "prose_max_chars": 500
+  "prose_max_chars": 500,
+  "opening_contract": "source-backed-opening/1.3",
+  "ticker_stance_contract": "per-expression-ticker-stance/1.0",
+  "source_fidelity_contract": "source-fidelity/1.0",
+  "review_contract": "source-first/1.1"
 }
 ```
 
 Active approved records add:
 
 - `object_type`: `company`, `theme`, `asset`, `basket` or `macro`.
+- `ticker_stances` and `stance_sentence` as defined above. Every ticker direction
+  must be supported by exact evidence from the expression's source set.
+- `opening_plan` under `source-backed-opening/1.3`. It records the subject,
+  judgment axis, directional state, mechanism, exact `stance_clause`, exact
+  `mechanism_clause`, per-ticker `stance_realizations`, mechanism location and
+  opening family. Public prose never repeats Bullish/Bearish/Neutral metadata.
+  The plan is supported by the selected primary expression. Final review also
+  records `relationship_complete` and `continuation_advances` after reading the
+  rendered stance and body as one passage.
+- `card_claims` also carry a `semantic_claim` tuple under
+  `source-fidelity/1.0`, preserving source subject, owner, predicate, polarity,
+  certainty, degree, condition and time scope. Unsupported author narration,
+  possessives and upgraded quantifiers are hard failures.
 - `object_key`: stable resolved identity, such as `company:sivers-semiconductors`.
   This is an internal key, not an invented registry ID. Resolve issuer/listing
   aliases before assigning it. Company primary bindings also carry the same
@@ -307,6 +367,13 @@ Active approved records add:
   `brief_thesis`, `position_update` or `reaction`, based on actual source content,
   not the historical event-type label. Only analysis/brief_thesis candidates with
   evidence for every core claim are eligible. Keep ineligible updates in history.
+- Visible Timeline review rows add `timeline_opening_contract`, set to
+  `source-backed-timeline-opening/1.2`, plus exact `stance_clause`, exact
+  `mechanism_clause`, per-ticker `stance_realizations`,
+  `metadata_hidden_direction_clear`, `direction_visible_immediately`,
+  `mechanism_visible_immediately`, `relationship_complete` and
+  `continuation_advances`. These fields apply to the dated event prose, not to
+  the current-card stance enum.
 - `card_claims`: exact spans of finished reader prose with source support. Every
   sentence/clause must be covered; changing prose requires rebuilding the map.
   Items have `{id, text, roles, evidence}`. Roles are `core_judgment`, `core_reason`,
@@ -337,11 +404,11 @@ Compute `last_update_at` from the complete history, including hidden entries.
 Rebuild the visible Timeline after selecting a different primary Source. An empty
 array is valid when the main card is the only source; render `No other updates yet.`
 
-Approved generation-3.1 records also require `timeline_review`, with one outcome
+Approved generation-3.2 records also require `timeline_review`, with one outcome
 for every event in the canonical company history (including legacy member events):
 
 ```json
-{"event_id":"event-id","disposition":"update","increment_kind":"reason|evidence|condition|correction","increment_domain":"fundamental","increment":"The material thesis increment.","reason":"What the original supports."}
+{"event_id":"event-id","disposition":"update","what":"The dated judgment.","why":"The dated source-backed reason.","content_domain":"fundamental|mixed","fundamental_increment":"Required for mixed content","increment_kind":"reason|evidence|condition|correction","increment_domain":"fundamental|mixed","increment":"The material thesis increment.","reason":"What the original supports."}
 ```
 
 An action classified as repetition also requires `same_action_event_id` pointing
@@ -417,9 +484,9 @@ same-statement merge members and derives 40-word previews and historical routes.
 
 Validate new runs with both `--require-generation-contract` and
 `--require-history-coverage`. New generation and presentation building require
-version 3.1. Version 3.0 packets remain readable under their earlier structural
-contract without the new-generation flag; they do not claim current compliance.
-A 3.1 baseline cannot be downgraded by removing or changing the policy version.
+version 3.2. Older packets remain readable under their earlier structural
+contracts without the new-generation flag; they do not claim current compliance.
+A 3.2 baseline cannot be downgraded by removing or changing the policy version.
 
 ## Product ThesisCard adapter
 
@@ -436,7 +503,7 @@ separate snapshot mode, not a replacement for historical events. Source.text sta
 in the private packet, never a public sources field. Append short named Markdown
 original links to product body using the seven-field product contract 1.1.
 Pass, context, holds and technical gaps are retained internally, never exported
-just to fill required ticker/source fields. Generation 3.1 primary-anchor rules
+just to fill required ticker/source fields. Generation 3.2 primary-anchor rules
 remain applicable to current snapshots; full eligible history remains available
 to export even when the UI hides its current-source Timeline duplicate.
 

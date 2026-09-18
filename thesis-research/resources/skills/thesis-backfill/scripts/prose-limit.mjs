@@ -8,6 +8,13 @@ export function proseLength(value) {
   return Array.from(prose).length;
 }
 
+export function composeVisibleProse(stanceSentence, description) {
+  const stance=String(stanceSentence??'').trim(),body=String(description??'').trim();
+  if(!stance)return body;if(!body)return stance;
+  const normalize=value=>value.replace(/\s+/g,' ').trim();
+  return normalize(body).startsWith(normalize(stance))?body:stance+'\n\n'+body;
+}
+
 export function validateProseLimit(packet, {baseline, required = false, check}) {
   const declared = packet.generation_policy?.prose_max_chars;
   const priorLimit = baseline?.generation_policy?.prose_max_chars;
@@ -23,7 +30,9 @@ export function validateProseLimit(packet, {baseline, required = false, check}) 
   };
   for (const record of entries(packet.records)) {
     const prior = priorRecords.get(record.id);
-    validate(record.description, prior?.description, 'Record ' + record.id);
+    validate(composeVisibleProse(record.stance_sentence,record.description),
+      prior?composeVisibleProse(prior.stance_sentence,prior.description):undefined,
+      'Record ' + record.id);
     const priorEvents = new Map(entries(prior?.events).map(e => [e.id, e]));
     for (const event of entries(record.events)) {
       validate(event.description, priorEvents.get(event.id)?.description, 'Event ' + event.id);

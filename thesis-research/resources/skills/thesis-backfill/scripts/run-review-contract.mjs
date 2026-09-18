@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import {openingChainIssues,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
+import {publicTickersFromBindings,publicTickerStances,tickerStanceIssues} from './ticker-stance-contract.mjs';
 
 const list = v => Array.isArray(v) ? v : [];
 const text = v => typeof v === 'string' && v.trim().length > 0;
@@ -6,7 +8,7 @@ const dated = v => text(v) && Number.isFinite(Date.parse(v));
 const canonical = v => Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canonical(v[k])])) : v;
 const hash = v => crypto.createHash('sha256').update(JSON.stringify(canonical(v))).digest('hex');
-export const REVIEW_CONTRACT = 'source-first/1.0';
+export const REVIEW_CONTRACT = 'source-first/1.1';
 
 function members(packet, record) {
   const records = list(packet.records), byId = new Map(records.map(r => [r.id, r]));
@@ -24,6 +26,7 @@ export function reviewInputHash(packet, record) {
     return content;
   });
   return hash({subject_id: packet.subject_id, as_of: packet.as_of,
+    generation_policy:packet.generation_policy,
     catalog_review: packet.catalog_review, history, sources: packet.sources,
     object_overlap_reviews: packet.object_overlap_reviews || []});
 }
@@ -89,6 +92,20 @@ export function validateRunReview(packet, check) {
     check(review?.reader?.decision === 'clear' && text(review?.reader?.reason), label + ' needs a reader-only assessment');
     check(review?.reader?.conclusion_first === true && text(review?.reader?.opening_conclusion)
       && text(review?.reader?.opening_reason), label + ' needs a conclusion-first opening review');
+    if(packet.generation_policy?.opening_contract===STANCE_OPENING_CONTRACT){
+      const opening=review?.reader?.opening;
+      check(opening?.contract===STANCE_OPENING_CONTRACT&&opening?.opening_family===record.opening_plan?.opening_family
+        &&opening?.judgment_axis===record.opening_plan?.judgment_axis&&opening?.specific_directional_state===true
+        &&opening?.mechanism_visible_early===true&&opening?.professional_voice===true
+        &&opening?.natural_collocation===true&&opening?.non_tautological===true&&opening?.non_template===true
+        &&opening?.relationship_complete===true&&opening?.continuation_advances===true
+        &&opening?.metadata_hidden_direction_clear===true
+        &&opening?.stance_clause===record.opening_plan?.stance_clause
+        &&opening?.mechanism_clause===record.opening_plan?.mechanism_clause
+        &&JSON.stringify(opening?.stance_realizations)===JSON.stringify(record.opening_plan?.stance_realizations),
+      label+' needs a complete professional stance-opening review');
+      for(const issue of openingChainIssues({stanceSentence:record.stance_sentence,body:record.description,subject:record.opening_plan?.subject,openingPlan:record.opening_plan,tickerStances:record.ticker_stances}))check(false,label+' '+issue);
+    }
     const exactEvidence = (evidence, allowed, context) => {
       check(list(evidence).length > 0, context + ' needs reviewed evidence');
       for (const e of list(evidence)) {
@@ -97,6 +114,10 @@ export function validateRunReview(packet, check) {
           && text(e.explanation), context + ' needs exact evidence and a support explanation');
       }
     };
+    if(packet.generation_policy?.version==='3.2'){
+      for(const issue of tickerStanceIssues({tickerStances:review?.ticker_stances,tickers:publicTickersFromBindings(record.asset_bindings),requireEvidence:false}))check(false,label+' '+issue);
+      check(JSON.stringify(publicTickerStances(review?.ticker_stances))===JSON.stringify(publicTickerStances(record.ticker_stances)),label+' reviewed card ticker stances differ from the source-bound record');
+    }
     const claims = list(record.card_claims), reviews = list(review?.claim_reviews);
     check(reviews.length === claims.length && new Set(reviews.map(r => r.claim_id)).size === reviews.length,
       label + ' needs one semantic review per finished claim');
@@ -120,6 +141,17 @@ export function validateRunReview(packet, check) {
       if(packet.generation_policy?.public_scope==='fundamental_company_only/1.0'){
         if(r?.content_domain==='technical_only')check(r?.decision==='source_only',label+' technical-only event must remain private '+event.id);
         if(r?.decision==='update')check(r?.content_domain==='fundamental',label+' public update must be fundamental-only '+event.id);
+      }
+      if(packet.generation_policy?.version==='3.2'&&r?.decision==='update'){
+        check(text(r.what)&&text(r.why),label+' event review needs explicit what and why '+event.id);
+        exactEvidence(r?.what_evidence,[...list(event.source_ids),...list(event.context_source_ids)],label+' event what '+event.id);
+        exactEvidence(r?.why_evidence,[...list(event.source_ids),...list(event.context_source_ids)],label+' event why '+event.id);
+        check(['fundamental','mixed'].includes(r.content_domain),label+' technical-only event cannot be public '+event.id);
+        if(r.content_domain==='mixed')check(text(r.non_technical_why),label+' mixed event needs an independently qualifying non-technical why '+event.id);
+        for(const issue of tickerStanceIssues({tickerStances:r.ticker_stances,tickers:publicTickersFromBindings(event.asset_bindings),requireEvidence:false}))check(false,label+' event '+event.id+' '+issue);
+        check(JSON.stringify(publicTickerStances(r.ticker_stances))===JSON.stringify(publicTickerStances(event.ticker_stances)),label+' event review ticker stances differ from the source-bound event '+event.id);
+        check(r.timeline_opening_contract===TIMELINE_OPENING_CONTRACT&&r.metadata_hidden_direction_clear===true,label+' event needs a metadata-independent Timeline opening review '+event.id);
+        for(const issue of timelineOpeningIssues({body:event.description,openingConclusion:r.what,openingReason:r.why,stanceClause:r.stance_clause,mechanismClause:r.mechanism_clause,stanceRealizations:r.stance_realizations,tickerStances:r.ticker_stances}))check(false,label+' event '+event.id+' '+issue);
       }
       exactEvidence(r?.evidence, [...list(event.source_ids), ...list(event.context_source_ids)], label + ' event ' + event.id);
     }

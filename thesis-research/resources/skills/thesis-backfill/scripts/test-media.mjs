@@ -62,6 +62,13 @@ test('Invalid offsets, empty segments and mismatched RSS episodes fail closed',(
 test('Video-dependent claims require visual review rather than transcript-only approval',()=>{
  const s=approved();s.media.kind='interview';assert(errors(s).some(e=>e.includes('visual dependency')));s.media.review.visual_dependency='none';assert.deepEqual(errors(s),[]);
 });
+test('Helpful missing images require explicit retrieval gaps while required images still fail closed',()=>{
+ const source={id:'source-1',attachment_status:'unavailable',attachments:[],attachment_reason:'Archived image URL was not recovered.'};
+ const record={author_id:'guest',review:{status:'approved'}};
+ const event={id:'event-1',source_ids:['source-1'],context_source_ids:[],support:[],visual_dependency:'helpful',visual_dependency_reason:'The chart would improve context.',media_bindings:[{source_id:'source-1',attachment_id:'image-1',disposition:'retrieval_gap',reason:'The archived attachment ID is known but its URL is unavailable.'}]};
+ const helpful=[];validateMediaEvent(event,record,new Map([[source.id,source]]),(ok,msg)=>{if(!ok)helpful.push(msg);});assert.deepEqual(helpful,[]);
+ event.visual_dependency='required';const required=[];validateMediaEvent(event,record,new Map([[source.id,source]]),(ok,msg)=>{if(!ok)required.push(msg);});assert(required.some(msg=>msg.includes('required visual context')));
+});
 test('Generic diarized segments retain full speaker boundaries and original language',()=>{
  const p=input();p.transcript={format:'segments',origin:'asr',segments:[{speaker:'A',start_seconds:0,end_seconds:3,text:'主持人的问题'},{speaker:'B',start_seconds:4,end_seconds:9,text:'I sold half, not all.'}]};const b=normalizeMedia(p);assert.equal(b.sources[0].text,'主持人的问题');assert.equal(b.sources[1].text,'I sold half, not all.');assert.equal(b.sources[1].media.end_seconds,9);assert.notEqual(b.sources[0].author_ids[0],b.sources[1].author_ids[0]);
 });

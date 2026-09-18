@@ -1,11 +1,16 @@
 import {validateCardSources} from './card-source-contract.mjs';
 import {validateTimelineReview} from './timeline-review-contract.mjs';
+import {openingChainIssues,STANCE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
+import {publicTickersFromBindings,tickerStanceIssues,TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
+import {SOURCE_FIDELITY_CONTRACT,sourceFidelityIssues,sourceFidelityClaimIssues} from './source-fidelity-contract.mjs';
 const filled=v=>typeof v==='string'&&v.trim().length>0;
 const list=v=>Array.isArray(v)?v:[];
 const secure=v=>{try{return new URL(v).protocol==='https:';}catch{return false;}};
 const handle=v=>String(v||'').replace(/^@/,'').toLowerCase();
 const time=v=>Date.parse(v);
 const dayEnd=v=>time(v)+(/^\d{4}-\d{2}-\d{2}$/.test(v||'')?86399999:0);
+const naturalStanceSentence=value=>filled(value)&&!/^\s*Stance\s*:/i.test(value)&&/^[A-Z0-9]/.test(value.trim())&&/[.!?]$/.test(value.trim())&&value.trim().split(/\s+/).length>=3&&value.trim().split(/\s+/).length<=30&&!value.includes('\n');
+const historySourceIds=record=>[...new Set(list(record.events).flatMap(event=>[...list(event.source_ids),...list(event.context_source_ids)]))];
 export const imageKey=b=>`${b.market}:${b.symbol}`;
 export function rootId(record,records){const map=new Map(records.map(r=>[r.id,r])),seen=new Set();let t=record;while(t?.superseded_by&&!seen.has(t.id)){seen.add(t.id);t=map.get(t.superseded_by);}return t?.id;}
 export const companyMembers=(record,records)=>records.filter(t=>rootId(t,records)===record.id);
@@ -15,9 +20,12 @@ export function sameValue(a,b){
 }
 export function validateGenerationContract(packet,{baseline,check,warnings,requireLatest=false}){
  const policy=packet.generation_policy;
- const fundamentalOnly=policy?.public_scope==='fundamental_company_only/1.0';
- check(['3.0','3.1'].includes(policy?.version)&&policy.grouping==='author_company'&&policy.history==='append_only'&&policy.timeline_preview_words===40&&fundamentalOnly,'Generation policy 3.1 with fundamental_company_only/1.0 scope is required for new runs');
- if(requireLatest||baseline?.generation_policy?.version==='3.1')check(policy?.version==='3.1','Generation policy 3.1 is required for new runs and cannot be downgraded');
+ const currentScope=policy?.public_scope==='source_grounded_company_analysis/1.0';
+ check(['3.0','3.1','3.2'].includes(policy?.version)&&policy.grouping==='author_company'&&policy.history==='append_only'&&policy.timeline_preview_words===40&&(policy.version==='3.2'?currentScope:policy.public_scope==='fundamental_company_only/1.0'),'Generation policy 3.2 with source_grounded_company_analysis/1.0 scope is required for new runs');
+ if(requireLatest||baseline?.generation_policy?.version==='3.2')check(policy?.version==='3.2','Generation policy 3.2 is required for new runs and cannot be downgraded');
+ if(requireLatest||baseline?.generation_policy?.opening_contract)check(policy?.opening_contract===STANCE_OPENING_CONTRACT,'Current generation requires opening_contract: '+STANCE_OPENING_CONTRACT);
+ if(policy?.version==='3.2')check(policy?.ticker_stance_contract===TICKER_STANCE_CONTRACT,'Current generation requires ticker_stance_contract: '+TICKER_STANCE_CONTRACT);
+ if(policy?.version==='3.2')check(policy?.source_fidelity_contract===SOURCE_FIDELITY_CONTRACT,'Current generation requires source_fidelity_contract: '+SOURCE_FIDELITY_CONTRACT);
  const records=list(packet.records).filter(Boolean),sources=new Map(list(packet.sources).filter(Boolean).map(s=>[s.id,s]));
  const authors=new Map(list(packet.authors).filter(Boolean).map(a=>[a.id,a]));
  const priorEvents=new Set(list(baseline?.records).flatMap(t=>list(t.events).map(e=>e.id)));
@@ -26,6 +34,12 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
   const approved=t.review?.status==='approved'&&!t.superseded_by,label='Record '+t.id;
   if(approved){check(['company','theme','asset','basket','macro'].includes(t.object_type)&&filled(t.object_key),label+' needs a resolved object_type/object_key');
    if(t.type!=='context')check(t.type==='thesis'&&t.kind!=='technical',label+' technical/setup records are outside the current public scope');
+   if(t.type!=='context'){
+    check(naturalStanceSentence(t.stance_sentence),label+' needs a natural directional conclusion rather than a stance label');
+   for(const issue of openingChainIssues({stanceSentence:t.stance_sentence,body:t.description,subject:t.opening_plan?.subject,openingPlan:t.opening_plan,tickerStances:t.ticker_stances}))check(false,label+' '+issue);
+   for(const issue of sourceFidelityIssues({prose:`${t.stance_sentence}\n${t.description}`,sources,allowedSourceIds:historySourceIds(t)}))check(false,label+' '+issue);
+   for(const claim of list(t.card_claims))for(const issue of sourceFidelityClaimIssues(claim,sources))check(false,label+' '+issue);
+   }
    if(t.object_type==='company'){
     check(t.type==='thesis'||t.type==='context',label+' company trades belong inside a company thesis, not a standalone setup');
     const key=t.author_id+'|'+t.object_key;check(!companies.has(key),label+' duplicates author-company '+companies.get(key));companies.set(key,t.id);
@@ -61,8 +75,9 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
   if(approved&&t.type!=='context'){
    neededPeople.add(t.author_id);
    const members=companyMembers(t,records),history=members.flatMap(m=>list(m.events)),lookup=new Map(history.map(e=>[e.id,e]));
-   if(policy?.version==='3.1')validateTimelineReview(t,history,sources,check,{fundamentalOnly});
-   if(policy?.version==='3.1')validateCardSources(t,history,sources,check);
+   if(['3.1','3.2'].includes(policy?.version))validateTimelineReview(t,history,sources,check,{fundamentalOnly:policy.version==='3.1',allowMixed:policy.version==='3.2'});
+   if(['3.1','3.2'].includes(policy?.version))validateCardSources(t,history,sources,check);
+   if(policy?.version==='3.2')for(const issue of tickerStanceIssues({tickerStances:t.ticker_stances,tickers:publicTickersFromBindings(t.asset_bindings),sources,allowedSourceIds:history.flatMap(event=>[...list(event.source_ids),...list(event.context_source_ids)])}))check(false,label+' '+issue);
    const review=t.primary_source_review,eligible=list(review?.eligible_event_ids);
    check(filled(review?.reason)&&eligible.length>0&&eligible.every(id=>lookup.has(id)),label+' needs reviewed eligible primary events');
    const selected=lookup.get(t.primary_event_id),source=sources.get(t.primary_source_id);

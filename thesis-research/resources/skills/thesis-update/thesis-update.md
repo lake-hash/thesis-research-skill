@@ -6,8 +6,8 @@ judgment can update several records.
 
 ## Preconditions
 
-- Work in the authorized Thesis repository: `<workspace>`. Verify
-  the repository root and its own `.git` before edits.
+- Work in the authorized Thesis repository. Verify the actual repository root
+  and its own `.git` before edits.
 - Read the versioned `thesis-field-notes/classification-rules.txt` and
   `editorial-rules.txt`. Do not copy or replace their policy in this skill.
 - Read the shared [operation contract](../references/thesis-operation-contract.md)

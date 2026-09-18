@@ -1,4 +1,4 @@
 interface:
   display_name: "Thesis Backfill"
   short_description: "Recover sourced author theses, tickers and updates"
-  default_prompt: "Use $thesis-backfill for the person I provide: follow contract 3.1, explain company roles and project context in plain English, map claims to evidence, select a Source supporting the core judgment and reason, preserve history, and validate the result."
+  default_prompt: "Use $thesis-backfill for the person I provide: follow generation 3.2 and source-backed-opening/1.3, require metadata-independent stance-first prose with exact stance/mechanism clauses and per-ticker realization spans, require following prose to advance rather than paraphrase, keep mixed views private, and run the fail-closed final projection and release-consistency gates."

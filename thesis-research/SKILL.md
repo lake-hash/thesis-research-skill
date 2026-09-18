@@ -33,12 +33,17 @@ For work spanning modes, also read the
   and an author-stated reason. Every visible update needs a material change to
   a reason, evidence, condition, risk, valuation, forecast, or stance.
 - Public prose is title-free, direct, conclusion-first, and no longer than 500
-  characters excluding the named original-link footer.
+  characters excluding the named original-link footer. A current Thesis Feed
+  body begins with its reviewed stance sentence; the combined visible body is
+  subject to the same limit.
 - Preserve original sources, speakers, timestamps, quotations, hashes, and
   immutable historical versions. Do not infer missing logic or authorship.
 - Build and review the final presentation, not only intermediate records. Final
   review must cover every visible card and Timeline row and bind to the exact
   presentation hash.
+- For Thesis Feed handoff, validate the seven-field ThesisCards and their grouped
+  projection. The Feed owns navigation, typography, image layout and lightbox
+  behavior; the skill owns evidence-bound body, ticker and media values.
 
 ## Portability Boundary
 

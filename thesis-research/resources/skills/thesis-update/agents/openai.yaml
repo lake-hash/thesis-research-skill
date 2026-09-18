@@ -1,4 +1,4 @@
 interface:
   display_name: "Thesis Update"
   short_description: "Classify new investor content into sourced updates"
-  default_prompt: "Use $thesis-update to process new content for the investor or automation I provide, preserve the source trail, and return update candidates without publishing."
+  default_prompt: "Use $thesis-update to process new content, preserve the source trail, keep portfolio operations private, apply source-backed-opening/1.3 so tags cannot substitute for exact stance-first prose, require per-ticker realization spans and a complete named mechanism in sentence one, omit mixed views, and return source-reviewed candidates with deterministic corpus checks without publishing."

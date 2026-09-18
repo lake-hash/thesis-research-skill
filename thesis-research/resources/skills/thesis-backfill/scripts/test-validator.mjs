@@ -11,6 +11,8 @@ import {validateDelivery} from '../../thesis-review-publish/scripts/source-cover
 
 import {reviewedFixture} from './test-review-fixture.mjs';
 import {reviewInputHash,validateObjectGrouping} from './run-review-contract.mjs';
+import {STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
+import {TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
 import {validateBatch} from './validate-batch.mjs';
 // Existing structural scenarios receive synthetic review records at delivery.
 // New integrity tests below call the production entrypoints directly.
@@ -20,13 +22,14 @@ const candidatesFromPacket=(p,...args)=>reviewedCandidatesFromPacket(reviewedFix
 
 const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
 function source(id,text,author='alex',canonical=id){return{id,channel_id:'site',url:'https://example.invalid/'+id,author_ids:[author],canonical_event_id:canonical,published_at:'2026-09-09T12:00:00Z',spoken_at:null,locator:'Original post',source_level:'primary',context_complete:true,text,text_sha256:sha(text),attachment_status:'none',attachments:[]};}
-function event(s,id='e1',type='FIRST_OBSERVED'){return{id,type,canonical_event_id:s.canonical_event_id,at:s.published_at,date_basis:'published',source_ids:[s.id],description:'Demand can support more deliveries if capacity is added.',support:[{source_id:s.id,quote:s.text,purpose:'judgment'}],action:{kind:'none',basis:'none'},visual_dependency:'none',visual_dependency_reason:'No source image adds material context in this fixture.',media_bindings:[]};}
+function event(s,id='e1',type='FIRST_OBSERVED'){return{id,type,canonical_event_id:s.canonical_event_id,at:s.published_at,date_basis:'published',source_ids:[s.id],description:'Acme could grow as customer reservations expand demand.',support:[{source_id:s.id,quote:s.text,purpose:'judgment'}],action:{kind:'none',basis:'none'},visual_dependency:'none',visual_dependency_reason:'No source image adds material context in this fixture.',media_bindings:[]};}
 function fixture(){
  const s=source('s1','Acme can grow as customers reserve more factory capacity.');
  return{schema_version:'1.0',subject_id:'alex',as_of:'2026-09-11',requested_scope:{mode:'explicit_window',start:'2026-09-01',end:'2026-09-11',note:'Synthetic test fixture; never publish.'},authors:[{id:'alex',name:'Alex Example',identity_status:'verified',evidence_urls:['https://example.invalid/alex']},{id:'beth',name:'Beth Example',identity_status:'verified',evidence_urls:['https://example.invalid/beth']}],coverage:[{id:'site',channel:'Official website',url:'https://example.invalid',declared_scope:'Known September fixture archive',status:'covered',proof:'Two fixture archive pages inspected.',gaps:[]}],sources:[s],decisions:[{source_id:s.id,disposition:'used',reason:'A company-specific argument.'}],records:[{id:'t1',author_id:'alex',type:'thesis',question:'Can Acme turn reserved capacity into more deliveries?',description:'Acme has a path to more deliveries if its factories can meet customer reservations.',assessment_as_of:'2026-09-09',origin:{status:'unknown',source_ids:[]},view_status:'active',position_status:'not_disclosed',dedup:{decision:'new',compared_ids:[],reason:'No related fixture record.'},asset_bindings:[{entity_name:'Acme',symbol:'ACME',market:'TEST',instrument_type:'equity',role:'primary',basis:'author_named',source_ids:['s1'],verification_url:'https://example.invalid/acme'}],events:[event(s)],signals:[],review:{status:'approved',reviewer:'Fixture reviewer',method:'Synthetic source-first review',checks:Object.fromEntries(['attribution','standalone','grouping','asset_binding','fidelity','chronology','editorial'].map(k=>[k,'pass'])),reason:'This fixture tests structure, not investment truth.'}}],pending:[],completion:{collection:'complete_in_declared_scope',classification:'complete',review:'complete'}};
 }
 const valid=p=>{const r=validatePacket(p);assert(r.ok,r.errors.join('\n'));};
 const invalid=(p,pattern,options)=>{const r=validatePacket(p,options);assert(!r.ok);assert(r.errors.some(e=>pattern.test(e)),r.errors.join('\n'));};
+const timelineOpening=(stanceClause='Acme could grow',mechanismClause='as customer reservations expand demand')=>({timeline_opening_contract:TIMELINE_OPENING_CONTRACT,stance_clause:stanceClause,mechanism_clause:mechanismClause,stance_realizations:[{ticker:'ACME',stance:'bullish',text_span:stanceClause}],metadata_hidden_direction_clear:true,direction_visible_immediately:true,mechanism_visible_immediately:true,relationship_complete:true,continuation_advances:true});
 
 test('A single sourced statement qualifies without targets, stops or a follow-up',()=>valid(fixture()));
 test('A short prose-only record does not require a card title',()=>{const p=fixture();delete p.records[0].title;valid(p);});
@@ -109,12 +112,15 @@ test('Date-only source precision does not invent an intraday ordering for coales
 
 function generationFixture(){
  const p=fixture(),t=p.records[0];p.authors[0].handle='alex';
- p.generation_policy={version:'3.1',grouping:'author_company',history:'append_only',public_scope:'fundamental_company_only/1.0',timeline_preview_words:40};
- t.object_type='company';t.object_key='company:acme';delete t.title;delete t.events[0].title;
- t.timeline_review=[{event_id:'e1',disposition:'update',increment_kind:'reason',increment_domain:'fundamental',increment:'First company judgment and its demand reason.',reason:'Source supports this observation.'}];
+ p.generation_policy={version:'3.2',grouping:'author_company',history:'append_only',public_scope:'source_grounded_company_analysis/1.0',timeline_preview_words:40,opening_contract:STANCE_OPENING_CONTRACT,ticker_stance_contract:TICKER_STANCE_CONTRACT,source_fidelity_contract:'source-fidelity/1.0'};
+ t.object_type='company';t.object_key='company:acme';t.stance='bullish';t.stance_sentence='Acme is strengthening as recurring demand expands.';t.opening_plan={version:STANCE_OPENING_CONTRACT,subject:'Acme',stance:'bullish',judgment_axis:'demand',directional_state:'strengthening',mechanism:'Recurring customer demand continues expanding.',stance_clause:'Acme is strengthening',mechanism_clause:'as recurring demand expands',stance_realizations:[{ticker:'ACME',stance:'bullish',text_span:'Acme is strengthening'}],mechanism_location:'same_sentence',opening_family:'company_state',source_explicit_direction:false};delete t.title;delete t.events[0].title;
+ t.timeline_review=[{event_id:'e1',disposition:'update',what:'Acme could grow.',why:'Customer reservations expand demand.',content_domain:'fundamental',increment_kind:'reason',increment_domain:'fundamental',increment:'First company judgment and its demand reason.',reason:'Source supports this observation.',...timelineOpening()}];
  t.asset_bindings[0].entity_key=t.object_key;t.asset_bindings[0].listing_region='US';t.events[0].asset_bindings=structuredClone(t.asset_bindings);
+ t.events[0].support.push({source_id:'s1',quote:p.sources[0].text,purpose:'reason'});
+ t.events[0].ticker_stances=[{ticker:'ACME',stance:'bullish',evidence:[{source_id:'s1',quote:p.sources[0].text,explanation:'Customer reservations support a positive direction for Acme.'}]}];
+ t.ticker_stances=structuredClone(t.events[0].ticker_stances);
  t.primary_event_id='e1';t.primary_source_id='s1';t.primary_source_review={eligible_event_ids:['e1'],reason:'Specific author-owned company judgment.'};
- t.card_claims=[{id:'core',text:t.description,roles:['core_judgment','core_reason'],evidence:[{source_id:'s1',quote:p.sources[0].text,supports_roles:['core_judgment','core_reason']}]}];
+ t.card_claims=[{id:'core',text:t.description,roles:['core_judgment','core_reason'],semantic_claim:{subject:'ACME',owner:'alex',predicate:'can_grow',polarity:'positive',certainty:'explicit',degree:null,condition:'customer reservations expand',time_scope:'current'},evidence:[{source_id:'s1',quote:p.sources[0].text,supports_roles:['core_judgment','core_reason']}]}];
  t.primary_source_review.candidates=[{event_id:'e1',source_id:'s1',kind:'analysis',covered_claim_ids:['core'],reason:'Source explains reserved capacity and growth.'}];
  Object.assign(t.review.checks,{reader_clarity:'pass',source_coverage:'pass',primary_anchor:'pass'});
  p.history_coverage=[{id:'claim-1',source_ids:['s1'],kind:'assessment',disposition:'event',event_ids:['e1'],reason:'Company judgment preserved.'}];
@@ -151,10 +157,12 @@ test('Changing historical media attribution in place requires a new source revis
 });
 function addUpdate(p,id,text,at='2026-09-10T12:00:00Z',action={kind:'none',basis:'none'}){
  const s=source(id,text);s.published_at=at;p.sources.push(s);p.decisions.push({source_id:id,disposition:'used',reason:'Dated update.'});
- const e={...event(s,'event-'+id,'POSITION'),asset_bindings:structuredClone(p.records[0].asset_bindings),action};delete e.title;
+ const e={...event(s,'event-'+id,'POSITION'),asset_bindings:structuredClone(p.records[0].asset_bindings),action};delete e.title;e.description='Acme could strengthen as the dated source adds company-specific evidence.';
+ e.support.push({source_id:id,quote:text,purpose:'reason'});
+ e.ticker_stances=[{ticker:'ACME',stance:'bullish',evidence:[{source_id:id,quote:text,explanation:'Synthetic source supplies the dated Acme direction.'}]}];
  if(action.kind!=='none'){e.account_id='main';e.episode_id='trade-1';}
  p.records[0].primary_source_review.candidates.push({event_id:e.id,source_id:id,kind:action.kind==='none'?'reaction':'position_update',covered_claim_ids:[],reason:'Timeline statement; no support for the central business argument.'});
- const review=action.kind==='none'?{event_id:e.id,disposition:'update',increment_kind:'evidence',increment_domain:'fundamental',increment:'Fixture material evidence.',reason:'Fixture source reviewed.'}:{event_id:e.id,disposition:'source_only',basis:'position_history',reason:'Action is retained privately without a thesis increment.'};
+ const review=action.kind==='none'?{event_id:e.id,disposition:'update',what:'Acme could strengthen.',why:'The dated source adds company-specific evidence.',content_domain:'fundamental',increment_kind:'evidence',increment_domain:'fundamental',increment:'Fixture material evidence.',reason:'Fixture source reviewed.',...timelineOpening('Acme could strengthen','as the dated source adds company-specific evidence')}:{event_id:e.id,disposition:'source_only',basis:'position_history',reason:'Action is retained privately without a thesis increment.'};
  p.records[0].events.push(e);p.records[0].timeline_review.push(review);p.records[0].assessment_as_of=at;p.history_coverage.push({id:'claim-'+id,source_ids:[id],kind:action.kind==='none'?'assessment':'position',disposition:'event',event_ids:[e.id],reason:'Preserve this statement.'});return e;
 }
 test('Approved generation requires an explicit review outcome for every event',()=>{
@@ -184,11 +192,15 @@ test('Position actions stay private and cannot be mislabeled as repeats or comme
 });
 function disclosureFixture(){
  const p=generationFixture(),t=p.records[0];
- for(const [id,description]of [['page1','Acme reserved a second factory.'],['page2','Deliveries start next quarter.']]){const e=addUpdate(p,id,description);e.description=description;Object.assign(p.sources.at(-1),{url:'https://example.invalid/letter.pdf#'+id,document_id:'letter',document_revision:'v1'});}
+ const pages=[
+  {id:'page1',description:'Acme could grow as a second factory expands capacity.',stance:'Acme could grow',mechanism:'as a second factory expands capacity',what:'Acme could grow.',why:'A second factory expands capacity.'},
+  {id:'page2',description:'Acme could deliver more next quarter as the second factory comes online.',stance:'Acme could deliver more next quarter',mechanism:'as the second factory comes online',what:'Acme could deliver more next quarter.',why:'The second factory comes online.'}
+ ];
+ for(const page of pages){const e=addUpdate(p,page.id,page.description);e.description=page.description;Object.assign(t.timeline_review.at(-1),{what:page.what,why:page.why,...timelineOpening(page.stance,page.mechanism)});Object.assign(p.sources.at(-1),{url:'https://example.invalid/letter.pdf#'+page.id,document_id:'letter',document_revision:'v1'});}
  t.disclosure_groups=[{id:'letter-acme',anchor_event_id:'event-page1',event_ids:['event-page1','event-page2'],reason:'Two pages of the same company disclosure.'}];return p;
 }
 test('Pages of one disclosure produce one complete detail and preserve every source',()=>{
- const p=disclosureFixture(),v=buildPresentation(p);assert.equal(v.cards[0].timeline.length,1);assert.equal(v.details.length,2);const detail=v.details.find(d=>d.event_ids.includes('event-page1'));assert.deepEqual(detail.event_ids,['event-page1','event-page2']);assert.equal(detail.description,'Acme reserved a second factory.\n\nDeliveries start next quarter.');assert.equal(detail.source_urls.length,2);assert.equal(v.cards[0].timeline[0].detail_id,detail.id);
+ const p=disclosureFixture(),v=buildPresentation(p);assert.equal(v.cards[0].timeline.length,1);assert.equal(v.details.length,2);const detail=v.details.find(d=>d.event_ids.includes('event-page1'));assert.deepEqual(detail.event_ids,['event-page1','event-page2']);assert.equal(detail.description,'Acme could grow as a second factory expands capacity.\n\nAcme could deliver more next quarter as the second factory comes online.');assert.equal(detail.source_urls.length,2);assert.equal(v.cards[0].timeline[0].detail_id,detail.id);
 });
 test('Disclosure grouping rejects mismatched documents, revisions, dates and overlapping members',()=>{
  for(const mutate of [p=>p.sources.at(-1).document_revision='v2',p=>p.sources.at(-1).document_id='other',p=>p.sources.at(-1).url='https://example.invalid/other.pdf#page2',p=>p.records[0].events.at(-1).at='2026-09-10T13:00:00Z']){const p=disclosureFixture();mutate(p);invalid(p,/share document, revision and expression date/);}
@@ -200,15 +212,17 @@ test('A disclosure containing the main source retains details but no duplicate T
  const p=disclosureFixture(),t=p.records[0];for(const s of p.sources)Object.assign(s,{url:'https://example.invalid/letter.pdf#'+s.id,document_id:'letter',document_revision:'v1',published_at:p.sources[0].published_at});for(const e of t.events)e.at=p.sources[0].published_at;
  t.disclosure_groups[0].event_ids.unshift('e1');const v=buildPresentation(p);assert.equal(v.cards[0].timeline.length,0);assert.equal(v.details.length,1);assert.equal(v.details[0].event_ids.length,3);
 });
-test('Generation 3.1 produces title-free cards and full historical details',()=>{
- const p=generationFixture();valid(p);const v=buildPresentation(p);assert.equal(v.cards.length,1);assert.equal(v.details[0].description,p.records[0].events[0].description);assert(!('title' in v.cards[0]));assert.equal(v.cards[0].timeline.length,0);assert.equal(v.cards[0].last_update_at,p.records[0].events[0].at);assert.equal(v.cards[0].author_image_url,null);
+test('Generation 3.2 produces title-free cards and per-ticker direction',()=>{
+ const p=generationFixture();valid(p);const v=buildPresentation(p);assert.equal(v.cards.length,1);assert.deepEqual(v.cards[0].ticker_stances,[{ticker:'ACME',stance:'bullish'}]);assert.equal(v.cards[0].stance_sentence,'Acme is strengthening as recurring demand expands.');assert.equal(v.details[0].description,p.records[0].events[0].description);assert(!('title' in v.cards[0]));assert.equal(v.cards[0].timeline.length,0);assert.equal(v.cards[0].last_update_at,p.records[0].events[0].at);assert.equal(v.cards[0].author_image_url,null);
 });
+test('Approved public generation rejects missing, invalid or label-only direction',()=>{const p=generationFixture();delete p.records[0].ticker_stances;invalid(p,/one source-backed stance per ticker/);const q=generationFixture();q.records[0].ticker_stances[0].stance='mixed';invalid(q,/bullish, bearish or none/);const r=generationFixture();r.records[0].stance_sentence='Stance: Bullish.';invalid(r,/natural directional conclusion/);});
+test('Approved public generation requires metadata-independent stance-first prose',()=>{const attractive=generationFixture(),t=attractive.records[0];t.stance_sentence='Acme looks attractive as recurring customer demand expands.';Object.assign(t.opening_plan,{stance_clause:'Acme looks attractive',mechanism_clause:'as recurring customer demand expands',stance_realizations:[{ticker:'ACME',stance:'bullish',text_span:'Acme looks attractive'}]});valid(attractive);for(const sentence of ['Acme looks attractive.','Bullish on Acme as recurring customer demand expands.','Acme demand expanded because customers reserved more capacity.']){const p=generationFixture(),r=p.records[0];r.stance_sentence=sentence;r.opening_plan={...r.opening_plan,stance_clause:sentence.replace(/\.$/,''),mechanism_clause:'because customers reserved more capacity',stance_realizations:[{ticker:'ACME',stance:'bullish',text_span:sentence.replace(/\.$/,'')}],source_explicit_direction:true};invalid(p,/mechanism_clause|metadata labels|independently state an investment direction|does not contain/);}});
 test('Generation packet exports distinct current snapshots and material dated history',()=>{
  const p=generationFixture();addUpdate(p,'evidence','A new factory adds delivery capacity.');
  const authorMap=[{internalAuthorId:'alex',authorId:'person-alex'}];
  const prepared=preparePacketExport(p,{authorMap,assignments:allocatePreviewIds(authorMap,p.records),runId:'fixture',baselineVersion:'v1'});
  const b=exportBundle(prepared);assert.equal(b.gaps.length,0);assert.equal(b.cards.length,2);assert.equal(b.currentCards.length,1);
- assert.equal(links.split(b.cards[0].body).prose,p.records[0].events[0].description);assert.equal(links.split(b.currentCards[0].body).prose,p.records[0].description);
+ assert.equal(links.split(b.cards[0].body).prose,p.records[0].events[0].description);assert.equal(links.split(b.currentCards[0].body).prose,p.records[0].stance_sentence+'\n\n'+p.records[0].description);
  assert.equal(b.manifest.items[0].sourceRevisions[0].textSha256,sha(p.sources[0].text));assert.equal(b.cards[1].thesisId,b.cards[0].thesisId);
 });
 test('Accepted source images are required, bound once and exported with the event',()=>{
@@ -218,20 +232,22 @@ test('Accepted source images are required, bound once and exported with the even
  assert.deepEqual(b.cards[0].media,[{type:'image',coverUrl:'https://example.invalid/source-image.png'}]);
  b.cards[0].media=[];assert.equal(validateDelivery(b.cards,b.manifest).ok,false);
 });
-test('A quoted-post image can be included only with retained context and a material-use reason',()=>{
+test('A relevant quoted-post image can be helpful explanatory context without author adoption',()=>{
  const p=generationFixture(),e=p.records[0].events[0],ctx=source('quoted','The earlier chart shows the support level.','beth');ctx.attachment_status='complete';ctx.attachments=[{id:'quoted-image',type:'image',cover_url:'https://example.invalid/quoted-chart.png'}];
- p.sources.push(ctx);p.decisions.push({source_id:ctx.id,disposition:'used',reason:'Quoted chart context for the author statement.'});e.context_source_ids=[ctx.id];e.support.push({source_id:ctx.id,quote:ctx.text,purpose:'context'});e.visual_dependency='helpful';e.visual_dependency_reason='The quoted chart explains the support level referenced by the author.';
+ p.sources.push(ctx);p.decisions.push({source_id:ctx.id,disposition:'used',reason:'Quoted chart context for the author statement.'});e.context_source_ids=[ctx.id];e.visual_dependency='helpful';e.visual_dependency_reason='The quoted chart helps explain the market context around the independently supported thesis.';
  e.media_bindings=[{source_id:ctx.id,attachment_id:'quoted-image',disposition:'include'}];invalid(p,/material-use reason/);
- e.media_bindings[0].reason='The quoted chart shows the prior support level that the author says held.';valid(p);
+ e.media_bindings[0].reason='The quoted chart clarifies the context around the author-supported thesis.';invalid(p,/explanatory_context/);
+ e.media_bindings[0].context_image_role='explanatory_context';valid(p);
  const authorMap=[{internalAuthorId:'alex',authorId:'person-alex'}],b=exportBundle(preparePacketExport(p,{authorMap,assignments:allocatePreviewIds(authorMap,p.records),runId:'fixture',baselineVersion:'v1'}));
  assert.deepEqual(b.cards[0].media,[{type:'image',coverUrl:'https://example.invalid/quoted-chart.png'}]);
- e.support=e.support.filter(span=>span.source_id!==ctx.id);invalid(p,/retained context support/);
+ e.visual_dependency='required';invalid(p,/cannot be required evidence/);
+ e.support.push({source_id:ctx.id,quote:ctx.text,purpose:'context'});delete e.media_bindings[0].context_image_role;valid(p);
 });
 test('Unavailable source attachment coverage blocks only image-dependent events',()=>{const p=generationFixture();p.sources[0].attachment_status='unavailable';p.sources[0].attachment_reason='Original image metadata could not be retrieved.';valid(p);p.records[0].events[0].visual_dependency='required';p.records[0].events[0].visual_dependency_reason='The chart contains the supporting evidence.';invalid(p,/unavailable source attachments|needs an included image/);});
 test('Decorative or redundant images can be omitted with a reviewed reason',()=>{const p=generationFixture(),s=p.sources[0],e=p.records[0].events[0];s.attachment_status='complete';s.attachments=[{id:'image-1',type:'image',cover_url:'https://example.invalid/decorative.png'}];e.media_bindings=[{source_id:'s1',attachment_id:'image-1',disposition:'omit',reason:'Decorative image adds no thesis context.'}];valid(p);const authorMap=[{internalAuthorId:'alex',authorId:'person-alex'}],b=exportBundle(preparePacketExport(p,{authorMap,assignments:allocatePreviewIds(authorMap,p.records),runId:'fixture',baselineVersion:'v1'}));assert.deepEqual(b.cards[0].media,[]);});
 test('A synthesis keeps older analysis and later evidence without leaking future evidence into history',()=>{
  const p=generationFixture(),t=p.records[0];addUpdate(p,'evidence','A new factory adds delivery capacity.');t.description+=' A new factory adds delivery capacity.';
- t.card_claims.push({id:'evidence-claim',text:'A new factory adds delivery capacity.',roles:['supporting_fact'],evidence:[{source_id:'evidence',quote:'A new factory adds delivery capacity.',supports_roles:['supporting_fact']}]});
+ t.card_claims.push({id:'evidence-claim',text:'A new factory adds delivery capacity.',roles:['supporting_fact'],semantic_claim:{subject:'ACME',owner:'alex',predicate:'adds_capacity',polarity:'positive',certainty:'explicit',degree:null,condition:null,time_scope:'current'},evidence:[{source_id:'evidence',quote:'A new factory adds delivery capacity.',supports_roles:['supporting_fact']}]});
  const view=buildPresentation(p);assert.deepEqual(view.cards[0].source_ids,['s1','evidence']);assert.equal(view.cards[0].source_urls.length,2);
  const authorMap=[{internalAuthorId:'alex',authorId:'person-alex'}];const prepared=preparePacketExport(p,{authorMap,assignments:allocatePreviewIds(authorMap,p.records),runId:'fixture',baselineVersion:'v1'});
  assert.equal(prepared.snapshots.schemaVersion,'thesis-export-input/1.1');const b=exportBundle(prepared);assert.equal(b.gaps.length,0);
@@ -246,7 +262,7 @@ test('A non-material holding-plan reaffirmation remains private',()=>{
  assert.equal(b.gaps.length,0);assert.equal(b.cards.length,1);assert.equal(buildPresentation(p).excluded_events.at(-1).disposition,'source_only');
 });
 test('New runs require the generation contract rather than accepting a legacy pass',()=>{
- invalid(fixture(),/Generation policy 3.1/,{requireGenerationContract:true});const p=generationFixture();delete p.images;invalid(p,/image lookup catalog/);
+ invalid(fixture(),/Generation policy 3.2/,{requireGenerationContract:true});const p=generationFixture();delete p.images;invalid(p,/image lookup catalog/);
 });
 test('Approved context cannot retain a source without a resolved investable object',()=>{
  const p=generationFixture(),t=p.records[0];t.type='context';t.object_type='macro';t.object_key='macro:event-risk';t.asset_bindings=[];t.events[0].asset_bindings=[];
@@ -257,8 +273,8 @@ test('Different business mechanisms cannot duplicate the same author-company car
  invalid(p,/duplicates author-company/);other.object_key='company:alternate-acme';other.asset_bindings[0].entity_key=other.object_key;invalid(p,/same company security/);
 });
 test('Merged records form one source row with all historical paragraphs preserved',()=>{
- const p=generationFixture(),other=structuredClone(p.records[0]);other.id='solar';other.superseded_by='t1';other.events[0].id='solar-event';other.events[0].description='Solar equipment is another business opportunity.';p.records.push(other);
- p.records[0].timeline_review.push({event_id:'solar-event',disposition:'update',increment_kind:'evidence',increment_domain:'fundamental',increment:'Another company business dimension.',reason:'Both source fragments retained.'});
+ const p=generationFixture(),other=structuredClone(p.records[0]);other.id='solar';other.superseded_by='t1';other.events[0].id='solar-event';other.events[0].description='Acme could benefit as solar equipment creates another source of demand.';p.records.push(other);
+ p.records[0].timeline_review.push({event_id:'solar-event',disposition:'update',what:'Acme could benefit.',why:'Solar equipment creates another source of demand.',content_domain:'fundamental',increment_kind:'evidence',increment_domain:'fundamental',increment:'Another company business dimension.',reason:'Both source fragments retained.',...timelineOpening('Acme could benefit','as solar equipment creates another source of demand')});
  valid(p);const v=buildPresentation(p);assert.equal(v.cards.length,1);assert.equal(v.cards[0].timeline.length,0);assert.equal(v.details[0].event_ids.length,2);assert(v.details[0].description.includes(other.events[0].description));assert.equal(v.aliases.solar,'t1');
 });
 test('Newer conversation does not replace the reviewed substantive primary source',()=>{
@@ -278,11 +294,11 @@ test('Future context and future-source ticker bindings are rejected',()=>{
  delete p.records[0].events[0].context_source_ids;p.records[0].events[0].asset_bindings[0].source_ids=[s.id];invalid(p,/binding imports a later source/);
 });
 test('An editorial note alone cannot authorize rewriting a frozen event',()=>{
- const baseline=generationFixture(),p=structuredClone(baseline),e=p.records[0].events[0];e.description='Clearer historical wording.';p.editorial_revisions=[{event_id:e.id,previous_description:baseline.records[0].events[0].description,reason:'A separately requested correction.',reviewed_at:'2026-09-11'}];
+ const baseline=generationFixture(),p=structuredClone(baseline),e=p.records[0].events[0];e.description='Acme could grow as customer reservations support more deliveries.';Object.assign(p.records[0].timeline_review[0],{what:'Acme could grow.',why:'Customer reservations support more deliveries.',...timelineOpening('Acme could grow','as customer reservations support more deliveries')});p.editorial_revisions=[{event_id:e.id,previous_description:baseline.records[0].events[0].description,reason:'A separately requested correction.',reviewed_at:'2026-09-11'}];
  invalid(p,/Append-only history changed/,{baseline});assert(validatePacket(p,{baseline,allowEditorialCorrections:true}).ok);e.asset_bindings[0].symbol='OTHER';invalid(p,/Frozen historical fields/,{baseline,allowEditorialCorrections:true});
 });
 test('Removing policy cannot downgrade an existing protected baseline',()=>{
- const baseline=generationFixture(),p=structuredClone(baseline);delete p.generation_policy;invalid(p,/Generation policy 3.1/,{baseline});
+ const baseline=generationFixture(),p=structuredClone(baseline);delete p.generation_policy;invalid(p,/Generation policy 3.2/,{baseline});
 });
 test('Trades share a company while preserving independent closed episodes',()=>{
  const p=generationFixture(),close=addUpdate(p,'close','Sold the position.','2026-09-10T12:00:00Z',{kind:'close',basis:'reported_execution'});close.type='CLOSED';
@@ -290,7 +306,7 @@ test('Trades share a company while preserving independent closed episodes',()=>{
 });
 test('Timeline has an exact 40-word boundary without changing full text',()=>{
  const forty=Array(40).fill('word').join(' ');assert.equal(timelinePreview(forty).show_more,false);const longer=forty+' final';assert.equal(timelinePreview(longer).show_more,true);assert.equal(timelinePreview(longer).preview,forty+'\u2026');assert.equal(timelinePreview('First.\n\nSecond.').preview,'First. Second.');
- const p=generationFixture();const e=addUpdate(p,'second',longer);e.description=longer;const v=buildPresentation(p);const detail=v.details.find(d=>d.event_ids.includes(e.id));assert.equal(detail.description,longer);assert.equal(v.cards[0].timeline[0].detail_id,detail.id);
+ const p=generationFixture(),detailText='Acme could strengthen because '+Array(38).fill('evidence').join(' ')+'.';const e=addUpdate(p,'second',detailText);e.description=detailText;Object.assign(p.records[0].timeline_review.at(-1),{what:'Acme could strengthen.',why:'Repeated evidence supports Acme strength.',...timelineOpening('Acme could strengthen','because '+Array(38).fill('evidence').join(' '))});const v=buildPresentation(p);const detail=v.details.find(d=>d.event_ids.includes(e.id));assert.equal(detail.description,detailText);assert.equal(v.cards[0].timeline[0].detail_id,detail.id);
 });
 test('Wrong API securities and unrelated person names cannot supply pictures',()=>{
  const p=generationFixture();p.images[1].resolved_symbol='SVXY';invalid(p,/Security picture symbol mismatch/);
@@ -321,7 +337,7 @@ test('A source proving the judgment does not automatically prove its reason',()=
 test('Additional delivery facts require their own evidence and preserve the older main anchor',()=>{
  const p=generationFixture(),e=addUpdate(p,'acceptance','Microsoft accepted the first Acme data-center phase.'),t=p.records[0],text='Microsoft accepted the first Acme data-center phase.';
  t.description+='\n\n'+text;invalid(p,/unmapped claims/);
- t.card_claims.push({id:'delivery',text,roles:['supporting_fact'],evidence:[{source_id:'acceptance',quote:text,supports_roles:['supporting_fact']}]});
+ t.card_claims.push({id:'delivery',text,roles:['supporting_fact'],semantic_claim:{subject:'ACME',owner:'alex',predicate:'phase_accepted',polarity:'positive',certainty:'explicit',degree:null,condition:null,time_scope:'current'},evidence:[{source_id:'acceptance',quote:text,supports_roles:['supporting_fact']}]});
  t.primary_source_review.candidates.at(-1).covered_claim_ids=['delivery'];valid(p);
  const view=buildPresentation(p),card=view.cards[0],claim=card.claim_sources.find(c=>c.id==='delivery');
  assert.equal(card.source_url,p.sources[0].url);assert.equal(card.at,p.sources[0].published_at);assert.equal(card.last_update_at,e.at);assert.deepEqual(claim.source_urls,[p.sources.at(-1).url]);assert.equal(claim.detail_ids.length,1);
@@ -340,16 +356,25 @@ test('Technical-only history stays private while fundamental updates remain publ
  const p=generationFixture();addUpdate(p,'technical','Price crossed its moving average.');const review=p.records[0].timeline_review.at(-1);
  Object.assign(review,{disposition:'source_only',basis:'technical_out_of_scope',increment_kind:undefined,increment_domain:undefined,increment:undefined,reason:'Technical-only material is private in this product scope.'});
  valid(p);
- const q=generationFixture();addUpdate(q,'technical','Price crossed its moving average.');q.records[0].timeline_review.at(-1).increment_domain='technical';invalid(q,/technical-only increments/);
+ const q=generationFixture();addUpdate(q,'technical','Price crossed its moving average.');Object.assign(q.records[0].timeline_review.at(-1),{content_domain:'technical_only',increment_domain:'technical'});invalid(q,/technical-only content|non-technical thesis increment/);
 });
-test('Mixed technical context stays private in the current public scope',()=>{
- const p=generationFixture();addUpdate(p,'mixed','Demand improved while price reclaimed the moving average.');Object.assign(p.records[0].timeline_review.at(-1),{increment_domain:'mixed',fundamental_increment:'Customer demand improved.'});invalid(p,/technical-only increments|fundamental-only/);
+test('Mixed technical context can be public only with an independent non-technical why',()=>{
+ const p=generationFixture(),e=addUpdate(p,'mixed','Acme is strengthening as customer demand improves, while price reclaimed the moving average.');
+ e.asset_bindings=structuredClone(p.records[0].asset_bindings);e.support.push({source_id:'mixed',quote:p.sources.at(-1).text,purpose:'reason'});e.ticker_stances=[{ticker:'ACME',stance:'bullish',evidence:[{source_id:'mixed',quote:p.sources.at(-1).text,explanation:'The source explicitly links improving demand to Acme.'}]}];
+ Object.assign(p.records[0].timeline_review.at(-1),{what:'Acme could strengthen.',why:'The dated source adds company-specific evidence.',content_domain:'mixed',increment_domain:'mixed',fundamental_increment:'Customer demand improved.'});valid(p);
+ delete p.records[0].timeline_review.at(-1).fundamental_increment;invalid(p,/non-technical increment/);
 });
 test('Source-first review requires a conclusion-first opening assessment',()=>{
  const p=reviewedFixture(generationFixture());delete p.records[0].source_first_review.reader.opening_reason;assert.throws(()=>buildReviewedPresentation(p),/conclusion-first/);
 });
 test('Legacy 3.0 remains readable but cannot pass current-generation validation',()=>{
- const p=generationFixture();p.generation_policy.version='3.0';delete p.records[0].card_claims;delete p.records[0].primary_source_review.candidates;valid(p);invalid(p,/Generation policy 3.1/,{requireGenerationContract:true});assert.throws(()=>buildPresentation(p),/Generation policy 3.1/);
+ const p=generationFixture();p.generation_policy.version='3.0';p.generation_policy.public_scope='fundamental_company_only/1.0';delete p.generation_policy.ticker_stance_contract;delete p.records[0].card_claims;delete p.records[0].primary_source_review.candidates;valid(p);invalid(p,/Generation policy 3.2/,{requireGenerationContract:true});assert.throws(()=>buildPresentation(p),/Generation policy 3.2/);
+});
+
+test('Every public card and update needs its own source-backed ticker stances',()=>{
+ const p=generationFixture();delete p.records[0].ticker_stances;invalid(p,/one source-backed stance per ticker/);
+ const q=generationFixture();q.records[0].ticker_stances[0].stance='long';invalid(q,/bullish, bearish or none/);
+ const r=generationFixture();r.records[0].events[0].ticker_stances[0].evidence[0].quote='Invented direction';invalid(r,/exact source quote/);
 });
 
 
@@ -367,6 +392,10 @@ test('Every generation outlet requires the prose policy; caller options cannot d
  assert.throws(()=>reviewedCandidatesFromPacket(p),/prose_max_chars/);
  const q=generationFixture();q.records[0].description=Array(10).fill(q.records[0].description).join(' ');q.records[0].card_claims[0].text=q.records[0].description;
  assert.throws(()=>buildReviewedPresentation(reviewedFixture(q)),/maximum is 500/);
+});
+test('Strict generation requires source fidelity policy',()=>{
+ const p=generationFixture();delete p.generation_policy.source_fidelity_contract;
+ invalid(p,/source_fidelity_contract/,{requireGenerationContract:true});
 });
 test('An altered conclusion with a valid old quote and all-pass labels cannot reuse source-first approval',()=>{
  const p=reviewedFixture(generationFixture()),t=p.records[0];
@@ -386,6 +415,14 @@ test('Source, current-state, grouping and Signals changes invalidate finished so
  p=>p.catalog_review.revision='changed',p=>p.records[0].signals_review.reason='Changed search result']){
   const p=reviewedFixture(generationFixture());mutate(p);assert.throws(()=>buildReviewedPresentation(p),/stale or missing/);
  }
+});
+test('Opening plan and generation policy participate in the review cache key',()=>{
+ const p=generationFixture(),before=reviewInputHash(p,p.records[0]);
+ p.records[0].opening_plan.mechanism='A different demand mechanism requires review.';
+ assert.notEqual(reviewInputHash(p,p.records[0]),before);
+ const q=generationFixture(),policyHash=reviewInputHash(q,q.records[0]);
+ q.generation_policy.opening_contract='source-backed-opening/1.0';
+ assert.notEqual(reviewInputHash(q,q.records[0]),policyHash);
 });
 test('Empty Signals require a search, while recorded no-match results do not force invented content',()=>{
  const p=reviewedFixture(generationFixture());assert.equal(buildReviewedPresentation(p).cards[0].signals.length,0);
@@ -433,9 +470,7 @@ test('A real cross-asset strategy can coexist only with explicit author-owned se
  assert.deepEqual(errors,[]);
 });
 test('Same-document fragments cannot combine into an over-limit historical detail',()=>{
- const p=disclosureFixture();for(const e of p.records[0].events.slice(1))e.description='a'.repeat(300);
- // Distinct paragraphs prevent deduplication from hiding the combined length.
- p.records[0].events.at(-1).description='b'.repeat(300);
+ const p=disclosureFixture(),events=p.records[0].events.slice(1),reviews=p.records[0].timeline_review.slice(1);events[0].description='Acme could grow because '+ 'a'.repeat(275)+'.';events[1].description='Acme could deliver more because '+ 'b'.repeat(275)+'.';Object.assign(reviews[0],{what:'Acme could grow.',why:events[0].description,...timelineOpening('Acme could grow','because '+ 'a'.repeat(275))});Object.assign(reviews[1],{what:'Acme could deliver more.',why:events[1].description,...timelineOpening('Acme could deliver more','because '+ 'b'.repeat(275))});
  assert.throws(()=>buildReviewedPresentation(reviewedFixture(p)),/Combined historical detail exceeds 500/);
 });
 test('Batch matching catches existing and pending object duplicates missed by per-author delivery',()=>{

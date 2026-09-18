@@ -38,9 +38,12 @@ but false claim, such as turning a power agreement into usable electricity.
 
 ## Write Only What The Content Needs
 
-Open with the investment judgment and its decisive reason in the same first
-sentence. Use the next sentences
-to explain why that reason applies to this company. Short transactions or holding
+Open with the investment judgment and apply the shared
+[stance opening contract](stance-opening-contract.md). Make the direction clear
+in the first clause. Put the decisive reason in the same first sentence and name
+the counterparty, product, transaction or constraint needed to understand it.
+Use later sentences only to add distinct evidence, causality, conditions or risk.
+Short transactions or holding
 updates can be one or two sentences; they do not need an invented rationale.
 Longer theses can use a short opening followed by connected supporting paragraphs.
 Do not force paragraph counts, a fixed sentence sequence or a minimum word count.
@@ -50,6 +53,10 @@ Remove generic closing lines such as `success depends on execution` when they sa
 nothing beyond the preceding explanation. Avoid slogans, formulaic contrasts,
 repeated could/can/benefit openings, narrator commentary and audit boilerplate.
 Professional means accurate and clear, not formal, distant or acronym-heavy.
+Bare attractive/unattractive labels, circular case language and passive support
+language are not professional substitutes for a specific mechanism. A
+mechanism-specific attractive/unattractive sentence remains valid when it is not
+overused across the feed.
 
 Keep source-backed uncertainty in the relevant clause. Do not strengthen `may`
 into `will` or infer revenue from a delivery milestone. Context that is missing

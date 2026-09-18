@@ -6,6 +6,8 @@ import {validateMediaSource,validateMediaEvent,validateSourceAttachments} from '
 import {validateDocumentEvidence} from './document-evidence-contract.mjs';
 import {validateProseLimit} from './prose-limit.mjs';
 import {validateRunReview,validateObjectGrouping} from './run-review-contract.mjs';
+import {publicTickersFromBindings,tickerStanceIssues} from './ticker-stance-contract.mjs';
+import {sourceFidelityIssues} from './source-fidelity-contract.mjs';
 
 const hash=text=>crypto.createHash('sha256').update(text).digest('hex');
 const filled=v=>typeof v==='string'&&v.trim().length>0;
@@ -21,7 +23,7 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
  const errors=[],warnings=[];
  const check=(condition,message)=>{if(!condition)errors.push(message);};
  if(!packet||typeof packet!=='object')return {ok:false,errors:['Packet must be an object'],warnings};
- const strictGeneration=requireGenerationContract||['3.0','3.1'].includes(packet.generation_policy?.version)||['3.0','3.1'].includes(baseline?.generation_policy?.version);
+ const strictGeneration=requireGenerationContract||['3.0','3.1','3.2'].includes(packet.generation_policy?.version)||['3.0','3.1','3.2'].includes(baseline?.generation_policy?.version);
  const arrays={};
  for(const key of ['authors','coverage','sources','decisions','records','pending']){check(Array.isArray(packet[key]),key+' must be an array');const entries=Array.isArray(packet[key])?packet[key]:[];check(entries.every(v=>v&&typeof v==='object'&&!Array.isArray(v)),key+' contains a non-object entry');arrays[key]=entries.filter(v=>v&&typeof v==='object'&&!Array.isArray(v));}
  const {authors,coverage,sources,decisions,records,pending}=arrays;
@@ -89,6 +91,10 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
   check(['new','matched','merged','unresolved'].includes(t.dedup?.decision)&&Array.isArray(t.dedup?.compared_ids)&&filled(t.dedup?.reason),label+' missing dedup review');
   check(['approved','hold','revise'].includes(t.review?.status)&&filled(t.review?.reviewer)&&filled(t.review?.method)&&filled(t.review?.reason),label+' missing review provenance');
   if(approved){check(people.get(t.author_id)?.identity_status==='verified',label+' ambiguous identity cannot be approved');check(gates.every(g=>t.review.checks?.[g]==='pass'),label+' review gates not all passed');check(t.dedup?.decision!=='unresolved',label+' unresolved duplicate cannot be approved');}
+  if(strictGeneration&&approved){
+   const allowedSourceIds=[...new Set((t.events||[]).flatMap(event=>[...(event.source_ids||[]),...(event.context_source_ids||[])]))];
+   for(const issue of sourceFidelityIssues({prose:`${t.stance_sentence||''}\n${t.description||''}`,sources:sourceMap,allowedSourceIds}))check(false,label+' '+issue);
+  }
   const bindings=Array.isArray(t.asset_bindings)?t.asset_bindings:[];
   if(approved&&(strictGeneration||t.type!=='context'))check(bindings.some(b=>['primary','vehicle'].includes(b.role)),label+' needs a resolved primary investment object or vehicle; omit the source instead of creating a record');
   for(const b of bindings){
@@ -123,6 +129,10 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
    if(action.kind==='close'&&action.basis==='reported_execution'){reportedClose=true;if(t.type==='setup')setupClosed=true;}
   }
   if(t.position_status==='closed_reported')check(reportedClose,label+' closed position lacks a reported close');
+  if(approved&&packet.generation_policy?.version==='3.2'&&t.type!=='context'){
+   const tickerSources=[...new Set((t.events||[]).flatMap(event=>[...(event.source_ids||[]),...(event.context_source_ids||[])]))];
+   for(const issue of tickerStanceIssues({tickerStances:t.ticker_stances,tickers:publicTickersFromBindings(t.asset_bindings),sources:sourceMap,allowedSourceIds:tickerSources}))check(false,label+' '+issue);
+  }
   if(t.origin?.status!=='unknown'){const ids=t.origin?.source_ids||[];check(ids.length>0&&ids.every(id=>sourceMap.has(id)),label+' origin claim lacks sources');check(t.events?.some(e=>e.support?.some(s=>s.purpose==='origin'&&ids.includes(s.source_id))),label+' origin claim lacks exact support');}
   for(const s of t.signals||[]){check(s.author_id!==t.author_id&&people.has(s.author_id),label+' signal must have another known author');const ss=refs(s.source_ids,label+' signal');supports(s.support,s.source_ids||[],label+' signal');check(ss.some(p=>p.author_ids?.includes(s.author_id)),label+' signal speaker mismatch');check(filled(s.description)&&filled(s.relation),label+' signal lacks relevance');}
  }

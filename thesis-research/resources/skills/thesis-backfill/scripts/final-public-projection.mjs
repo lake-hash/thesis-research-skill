@@ -2,9 +2,17 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {mediaSourceLink} from './media-contract.mjs';
-import {proseLength} from './prose-limit.mjs';
+import {composeVisibleProse,proseLength} from './prose-limit.mjs';
+import {
+ FINAL_PUBLIC_REVIEW_SCHEMA,allowedMechanismTypes,matchedPatterns,
+ portfolioOperationPatterns,processLanguagePatterns,proseQualityIssues,
+ tickerRoleIssues,whyQualityIssues
+} from './public-content-gates.mjs';
+import {sourceFidelityIssues} from './source-fidelity-contract.mjs';
+import {openingChainIssues,openingDiversityReview,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
+import {publicTickerStances,tickerStanceIssues,TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
 
-export const FINAL_PUBLIC_REVIEW='final-public/1.0';
+export const FINAL_PUBLIC_REVIEW=FINAL_PUBLIC_REVIEW_SCHEMA;
 
 const list=value=>Array.isArray(value)?value:[];
 const text=value=>typeof value==='string'&&value.trim().length>0;
@@ -12,15 +20,9 @@ const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof v
  ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 const sha=value=>crypto.createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
 const sorted=value=>[...value].sort((a,b)=>String(a).localeCompare(String(b)));
-const processLanguage=[
- /\b(?:the|this) (?:article|source|reply|thread|newsletter|interview|podcast|transcript)\b/i,
- /\b(?:the|this) post\b(?!-)/i,
- /\bthe author\b/i,
- /\bnearby X posts\b/i,
- /\bsingle verified estimate\b/i,
- /\bnot clearly establish(?:ed)?\b/i,
- /\b(?:reviewer|audit) (?:note|comment|conclusion|decision)\b/i
-];
+const abstractWhyLanguage=/\b(?:differentiated market behavior|sources? of future value|good positioning|strong management|attractive opportunity)\b/i;
+const normalized=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const naturalStanceSentence=value=>text(value)&&!/^\s*Stance\s*:/i.test(value)&&/^[A-Z0-9]/.test(value.trim())&&/[.!?]$/.test(value.trim())&&value.trim().split(/\s+/).length>=3&&value.trim().split(/\s+/).length<=30&&!value.includes('\n');
 
 export function presentationHash(presentation){
  return sha(presentation);
@@ -29,14 +31,14 @@ export function presentationHash(presentation){
 export function publicExpressions(presentation){
  const rows=[];
  for(const card of list(presentation?.cards)){
-  rows.push({id:'card:'+card.id,kind:'card',record_id:card.id,description:card.description,
+ rows.push({id:'card:'+card.id,kind:'card',record_id:card.id,description:card.description,
    source_id:card.primary_source_id,source_url:card.source_url,published_at:card.at,
-   tickers:list(card.assets).map(asset=>asset.symbol),media_dependency:card.media_dependency||'none'});
+   tickers:list(card.assets).map(asset=>asset.symbol),ticker_stances:publicTickerStances(card.ticker_stances),media_dependency:card.media_dependency||'none',stance_sentence:card.stance_sentence,opening_plan:card.opening_plan});
   for(const item of list(card.timeline)){
    const detail=list(presentation.details).find(row=>row.id===item.detail_id);
    rows.push({id:'timeline:'+item.detail_id,kind:'timeline',record_id:card.id,event_id:item.id,
     description:detail?.description,source_id:detail?.source_id,source_url:item.source_url||detail?.source_url,
-    published_at:item.at,tickers:list(item.assets).map(asset=>asset.symbol),
+    published_at:item.at,tickers:list(item.assets).map(asset=>asset.symbol),ticker_stances:publicTickerStances(item.ticker_stances),
     media_dependency:detail?.media_dependency||'none'});
   }
  }
@@ -50,7 +52,7 @@ export function validateFinalProjection(packet,presentation,review){
  const detailMap=new Map(list(presentation?.details).map(detail=>[detail.id,detail]));
  const expressions=publicExpressions(presentation),seen=new Set();
 
- check(presentation?.generation_version==='3.1','Final presentation must use generation contract 3.1');
+ check(presentation?.generation_version==='3.2','Final presentation must use generation contract 3.2');
  check(list(presentation?.cards).length===list(packet?.records).filter(record=>!record.superseded_by&&record.type!=='context'&&record.review?.status==='approved').length,
   'Final presentation does not contain exactly one card per approved active record');
  for(const card of list(presentation?.cards)){
@@ -62,6 +64,9 @@ export function validateFinalProjection(packet,presentation,review){
   check(text(card.source_url),label+' needs exactly one public source URL');
   check(text(card.at),label+' needs a source-bound date');
   check(list(card.assets).length>0,label+' needs a verified investable object');
+  for(const issue of tickerStanceIssues({tickerStances:card.ticker_stances,tickers:list(card.assets).map(asset=>asset.symbol),requireEvidence:false}))errors.push(label+' '+issue);
+  check(naturalStanceSentence(card.stance_sentence),label+' needs a natural directional conclusion rather than a stance label');
+  for(const issue of openingChainIssues({stanceSentence:card.stance_sentence,body:card.description,subject:card.opening_plan?.subject,openingPlan:card.opening_plan,tickerStances:card.ticker_stances}))errors.push(label+' '+issue);
   const primary=record&&list(record.events).find(event=>event.id===record.primary_event_id);
   const source=primary&&sourceMap.get(record.primary_source_id);
   check(!!primary&&!!source,label+' primary source/event is missing');
@@ -79,18 +84,31 @@ export function validateFinalProjection(packet,presentation,review){
    timelineSources.add(item.source_url||detail?.source_url);
    check(item.at===detail?.at,context+' preview/detail dates differ');
    check(proseLength(detail?.description||'')<=500,context+' detail exceeds 500 characters');
+   check(list(item.assets).length>0,context+' needs its own ticker set');
+   for(const issue of tickerStanceIssues({tickerStances:item.ticker_stances,tickers:list(item.assets).map(asset=>asset.symbol),requireEvidence:false}))errors.push(context+' '+issue);
    const expected=item.preview===undefined?null:(detail.description.trim().split(/\s+/).length>40);
    if(expected!==null)check(item.show_more===expected,context+' Show more does not match the 40-word rule');
   }
  }
+ const diversity=openingDiversityReview(list(presentation?.cards).map(card=>card.stance_sentence));
+ for(const issue of diversity.errors)errors.push('Opening diversity: '+issue);
+ for(const issue of diversity.warnings)warnings.push('Opening diversity: '+issue);
+ if(diversity.warnings.length)check(review?.opening_distribution_review?.contract===STANCE_OPENING_CONTRACT&&review?.opening_distribution_review?.decision==='approved'&&review?.opening_distribution_review?.warning_count===diversity.warnings.length&&text(review?.opening_distribution_review?.reason),'Opening diversity warnings require a corpus-level editorial decision');
  for(const row of expressions){
-  check(text(row.description),row.id+' has no public prose');
-  check(proseLength(row.description||'')<=500,row.id+' exceeds 500 prose characters');
-  for(const pattern of processLanguage)check(!pattern.test(row.description||''),row.id+' exposes source/reviewer narration');
+ check(text(row.description),row.id+' has no public prose');
+  const visibleText=row.kind==='card'?composeVisibleProse(row.stance_sentence,row.description):row.description;
+  check(proseLength(visibleText)<=500,row.id+' exceeds 500 visible prose characters');
+  for(const issue of sourceFidelityIssues({prose:visibleText,sources:sourceMap,allowedSourceIds:[row.source_id]}))errors.push(row.id+' '+issue);
+  check(matchedPatterns(visibleText,processLanguagePatterns).length===0,row.id+' exposes source/reviewer narration');
+  check(matchedPatterns(visibleText,portfolioOperationPatterns).length===0,row.id+' exposes portfolio/trade operation language');
+  check(!/\b(?:bullish|bearish|neutral)\b/i.test(visibleText),row.id+' exposes ticker-direction metadata inside public prose');
+  for(const issue of proseQualityIssues(row.description,{prefixes:row.kind==='card'?[row.stance_sentence]:[]}))errors.push(row.id+' '+issue);
+  check(!abstractWhyLanguage.test(row.description||''),row.id+' uses an abstract why without a concrete mechanism');
  }
 
  check(review?.schema_version===FINAL_PUBLIC_REVIEW,'Missing '+FINAL_PUBLIC_REVIEW+' review');
  check(text(review?.reviewer)&&text(review?.reviewed_at),'Final public review needs reviewer and timestamp');
+ check(text(review?.release_version)&&!/-candidate$/i.test(review.release_version),'Final public review needs one non-candidate release version');
  check(review?.presentation_sha256===presentationHash(presentation),'Final public review is stale or bound to another presentation');
  check(review?.review_scope==='all_visible_expressions','Final public review must cover all visible expressions');
  check(review?.total_visible_expressions===expressions.length&&review?.completed_expressions===expressions.length,'Final public review counts must equal all visible expressions');
@@ -103,29 +121,64 @@ export function validateFinalProjection(packet,presentation,review){
   check(row.source_id===expression.source_id&&row.source_url===expression.source_url&&row.published_at===expression.published_at,
    label+' source/date no longer matches the rendered expression');
   check(JSON.stringify(sorted(list(row.tickers)))===JSON.stringify(sorted(expression.tickers)),label+' ticker review differs from rendered tags');
+  check(row.ticker_stance_contract===TICKER_STANCE_CONTRACT&&row.ticker_stance_supported===true,label+' needs source-backed per-ticker direction review');
+  check(JSON.stringify(publicTickerStances(row.ticker_stances))===JSON.stringify(expression.ticker_stances),label+' ticker stance review differs from the rendered expression');
+  for(const issue of tickerStanceIssues({tickerStances:row.ticker_stances,tickers:expression.tickers,requireEvidence:false}))errors.push(label+' '+issue);
   check(text(row.what)&&text(row.why),label+' needs explicit what and why');
   check(row.conclusion_first===true&&text(row.opening_conclusion)&&text(row.opening_reason),label+' needs a conclusion-first opening review');
   check(['fundamental','mixed'].includes(row.content_domain),label+' technical-only content cannot enter the public projection');
   if(expression.kind==='timeline'){
    check(['reason','evidence','condition','correction'].includes(row.increment_kind),label+' needs a material increment kind');
    check(text(row.increment),label+' needs the actual thesis increment');
-   check(row.increment_domain==='fundamental',label+' Timeline increment must be fundamental-only');
+   check(['fundamental','mixed'].includes(row.increment_domain),label+' Timeline needs a non-technical thesis increment');
+   if(row.content_domain==='mixed'||row.increment_domain==='mixed')check(text(row.fundamental_increment),label+' mixed Timeline content needs an independently qualifying non-technical increment');
+   check(row.timeline_opening_contract===TIMELINE_OPENING_CONTRACT&&row.direction_visible_immediately===true&&row.mechanism_visible_immediately===true&&row.relationship_complete===true&&row.continuation_advances===true&&row.metadata_hidden_direction_clear===true,label+' lacks the dated Timeline opening/progression review');
+   for(const issue of timelineOpeningIssues({body:expression.description,openingConclusion:row.opening_conclusion,openingReason:row.opening_reason,stanceClause:row.stance_clause,mechanismClause:row.mechanism_clause,stanceRealizations:row.stance_realizations,tickerStances:row.ticker_stances}))errors.push(label+' '+issue);
   }
   if(expression.kind==='card')check(row.increment_kind===null||row.increment_kind===undefined,label+' card must not masquerade as a Timeline increment');
   check(row.direct_voice===true&&row.no_inference===true&&row.source_fidelity===true,
    label+' must pass direct-voice, no-inference and source-fidelity review');
   check(row.ticker_complete===true&&row.media_complete===true,label+' ticker/media completeness is unresolved');
-  if(expression.tickers.length===0)check(expression.kind==='timeline'&&row.object_resolution==='record',label+' missing event ticker needs explicit record-level resolution');
+  for(const issue of tickerRoleIssues(row,expression.tickers,{allowRecordResolution:expression.kind==='timeline'}))errors.push(label+' '+issue);
+  for(const issue of whyQualityIssues(row.why))errors.push(label+' '+issue);
+  check(row.why_complete_sentence===true,label+' why has not been reviewed as a complete sentence');
+  check(row.objective_fact_only===false,label+' why is still only an objective fact or result');
+  check(allowedMechanismTypes.has(row.why_mechanism_type),label+' needs a concrete why_mechanism_type');
+  check(row.specific_directional_state===true&&row.mechanism_visible_early===true&&row.professional_voice===true&&row.natural_collocation===true&&row.non_tautological===true&&row.non_template===true&&row.relationship_complete===true&&row.continuation_advances===true&&row.metadata_hidden_direction_clear===true,label+' lacks the professional opening and passage-progression review');
+  if(expression.kind==='card'){
+   check(row.stance_sentence===expression.stance_sentence,label+' stance-first sentence is missing or stale');
+   check(row.opening_contract===STANCE_OPENING_CONTRACT&&JSON.stringify(canonical(row.opening_plan))===JSON.stringify(canonical(expression.opening_plan)),label+' opening plan is missing, stale or bound to another expression');
+   check(row.stance_clause===expression.opening_plan?.stance_clause&&row.mechanism_clause===expression.opening_plan?.mechanism_clause&&JSON.stringify(canonical(row.stance_realizations))===JSON.stringify(canonical(expression.opening_plan?.stance_realizations)),label+' stance-first spans are missing or stale');
+   check(row.specific_directional_state===true&&row.mechanism_visible_early===true&&row.professional_voice===true&&row.natural_collocation===true&&row.non_tautological===true&&row.non_template===true&&row.relationship_complete===true&&row.continuation_advances===true,label+' lacks the professional stance-opening and passage-progression review');
+   for(const issue of openingChainIssues({stanceSentence:expression.stance_sentence,body:expression.description,subject:expression.opening_plan?.subject,openingPlan:expression.opening_plan,tickerStances:expression.ticker_stances}))errors.push(label+' '+issue);
+   check(row.direction_expressed_naturally===true&&row.direction_visible_immediately===true&&row.investment_landing_clear===true&&row.mechanism_follows===true,label+' lacks a reviewed immediate-direction-to-conclusion-to-mechanism chain');
+   check(normalized(row.opening_reason)===normalized(row.why),label+' body opening is not the reviewed mechanism');
+  }
+  check(row.company_specific_increment===true,label+' lacks a company-specific increment decision');
+  check(row.portfolio_operation_free===true,label+' still contains portfolio/trade operation content');
+  check(row.process_language_free===true,label+' still contains source/reviewer process narration');
+  check(row.prose_coherent===true,label+' still contains fragments or incoherent prose');
+  check(row.repetition_free===true,label+' still contains repeated reasoning');
+  check(row.related_context_excluded===true,label+' has not excluded adjacent theme, peer, ETF, policy or financing context');
+  check(row.why_specific===true,label+' why remains abstract or mechanism-free');
+  check(expression.tickers.length>0,label+' every card and Timeline expression needs at least one ticker');
  }
  for(const id of reviewRows.keys())check(expressions.some(row=>row.id===id),'Final public review contains a non-visible expression '+id);
  return {ok:errors.length===0,errors,warnings,counts:{cards:list(presentation?.cards).length,timeline:expressions.filter(row=>row.kind==='timeline').length,expressions:expressions.length}};
 }
 
-if(process.argv[1]&&import.meta.url===pathToFileURL(fs.realpathSync(process.argv[1])).href){
+if(process.argv[1]&&fs.existsSync(process.argv[1])&&import.meta.url===pathToFileURL(fs.realpathSync(process.argv[1])).href){
  try{
   const [packetFile,presentationFile,reviewFile]=process.argv.slice(2);
   if(!reviewFile)throw Error('Usage: final-public-projection.mjs packet.json presentation.json final-review.json');
-  const result=validateFinalProjection(JSON.parse(fs.readFileSync(packetFile,'utf8')),JSON.parse(fs.readFileSync(presentationFile,'utf8')),JSON.parse(fs.readFileSync(reviewFile,'utf8')));
+  const packet=JSON.parse(fs.readFileSync(packetFile,'utf8')),presentation=JSON.parse(fs.readFileSync(presentationFile,'utf8')),review=JSON.parse(fs.readFileSync(reviewFile,'utf8'));
+  const result=validateFinalProjection(packet,presentation,review);
+  if(process.argv.includes('--published')){
+   const versions=[packet.release_version,presentation.release_version,review.release_version];
+   if(new Set(versions).size!==1||versions.some(value=>!value||/-candidate$/i.test(value)))result.errors.push('Published packet, presentation and review must share one non-candidate release version');
+   if(packet.release_status!=='released'||presentation.release_status!=='released'||review.release_status!=='released')result.errors.push('Published readback requires release_status: released across all artifacts');
+   result.ok=result.errors.length===0;
+  }
   console.log(JSON.stringify(result,null,2));process.exitCode=result.ok?0:1;
  }catch(error){console.error(error.message);process.exitCode=1;}
 }

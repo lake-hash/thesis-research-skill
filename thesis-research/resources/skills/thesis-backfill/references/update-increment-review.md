@@ -9,11 +9,29 @@ or operative/invalidation condition, or a correction of attribution or meaning. 
 increment in the prose. A generic bullish summary can erase the very reason to
 keep an update. Do not then classify the damaged summary as redundant.
 
+For a visible update, write the retained increment under
+`source-backed-timeline-opening/1.2`: the first sentence combines that date's
+directional investment meaning with its decisive mechanism. It names any necessary
+counterparty, product or transaction. Later sentences add only evidence, conditions
+or risk available at that date; they cannot repeat the opening or import the current
+card's later conclusion.
+
 An actual trade, planned hold, position size, realized result, price change or
 victory recap is private trade/position history unless the same expression also
 adds substantive evidence or reasoning about why the thesis holds, weakens or
 changes. Do not turn a result into thesis validation merely because price moved in
 the predicted direction.
+
+Allocation risk is still an operation, not a reason. `Holding mostly X is
+riskier`, `diversifying across X/Y/Z`, `building toward 10%`, `using margin`,
+`small position`, `larger position through volatility` and similar wording do
+not become public increments. In mixed rows, write a clean fundamental-only
+display override; never append the trade sentence after the valid evidence.
+
+Test company specificity separately from thematic relevance. A financing plan,
+ETF basket, sovereign-compute policy or peer success can be relevant to a sector
+without changing the current company's thesis. Keep it outside the Timeline
+unless the source states the company-level implication and the review records it.
 
 Support, resistance, targets, stops, entry/exit levels, moving averages, chart
 patterns, volume, momentum and positioning are private `technical_out_of_scope`
@@ -65,6 +83,13 @@ combined disclosure, hold, or retained pending review. Retain the prior wording
 and the decision evidence. Source-only and held items must not be exported as
 new_thesis/thesis_update product cards. Changing the main argument requires a
 fresh primary-source check, not just a new opening sentence.
+
+Before approval, perform an adversarial subtraction test: delete every sentence
+about buying, selling, holding, entry, allocation, margin and returns. If the
+remaining text does not independently state a material company-specific change,
+the row is `source_only`. Then perform a specificity test: replace the company
+name with another sector constituent. If the why still reads equally well, it is
+theme/context or abstract language, not a company increment.
 
 ## Concrete Review Cases
 

@@ -39,7 +39,8 @@ or title without inspectable source evidence.
    return.
 5. Check the copy against the source and date. Use continuous description/body prose without a generated title field on
    either a thesis or update. Append named original hyperlinks to body, not a
-   separate sources field. Apply generation 3.1 claim coverage and primary-anchor checks. Timeline entries use only information known at that time.
+   separate sources field. Apply generation 3.2 claim coverage, per-ticker direction
+   and primary-anchor checks. Timeline entries use only information known at that time.
    Keep Signals for other authors and facts separate from the author's view.
 6. Decide one of: approve, revise, merge or reclassify, hold, or reject. Record
    the reviewer, method, checks, evidence, and reason. A language revision goes

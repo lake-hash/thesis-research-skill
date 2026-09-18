@@ -7,6 +7,7 @@ import {exportCards} from './export-thesis-cards.mjs';
 import {mediaSourceLink} from '../../thesis-backfill/scripts/media-contract.mjs';
 import links from '../../thesis-backfill/scripts/source-links.cjs';
 import {sealSourceCoverage} from './source-coverage-contract.mjs';
+import {composeVisibleProse} from '../../thesis-backfill/scripts/prose-limit.mjs';
 
 export const digest = value => crypto.createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
 export function sourceDisplayName(source,authors){
@@ -57,10 +58,12 @@ export function preparePacketExport(packet,config) {
   const base={schemaVersion:'thesis-export-input/1.1',runId:config.runId,timePolicy:'expression_time',authorMap:config.authorMap,assignments:config.assignments,sources};
   const history={...base,items:[]},snapshots={...base,items:[]},groups=[];
   const events=new Map(packet.records.flatMap(t=>t.events).map(e=>[e.id,e]));
-  const bindings=(assets,candidates)=>assets.map(a=>{
+  const bindings=(assets,candidates,tickerStances)=>assets.map(a=>{
     const b=candidates.find(b=>b.symbol===a.symbol&&b.market===a.market&&['primary','vehicle'].includes(b.role));
     if(!b)throw Error('Missing reviewed asset binding '+a.symbol);
-    return {...b,verified:true,logoUrl:a.image_url||undefined,displayNote:b.display_note};
+    const direction=tickerStances.find(item=>item.ticker===a.symbol)?.stance;
+    if(!['bullish','bearish','none'].includes(direction))throw Error('Missing reviewed ticker direction '+a.symbol);
+    return {...b,verified:true,direction,logoUrl:a.image_url||undefined,displayNote:b.display_note};
   });
   const eventMedia=eventIds=>{
     const output=[],seen=new Set(),sourceImageBindings=[];
@@ -83,15 +86,15 @@ export function preparePacketExport(packet,config) {
         type:index===0?'new_thesis':'thesis_update',mode:'history_event',eventType:index===0?'FIRST_OBSERVED':e.type==='FIRST_OBSERVED'?'EVIDENCE':e.type,
         eventDisposition:'update',incrementReview:{decision:'update',incrementKind:r.timeline_review.find(x=>x.event_id===e.id)?.increment_kind,increment:r.timeline_review.find(x=>x.event_id===e.id)?.increment,reviewId:config.runId+':'+r.id},at:detail.at,dateBasis:detail.date_basis,datePrecision:e.date_precision||raw.get(primarySourceId)?.date_precision,
         description:detail.description,sourceIds:[...new Set([...detail.source_ids,...detail.context_source_ids])],primarySourceId,
-        assetBindings:bindings(detail.assets,detail.event_ids.flatMap(id=>events.get(id).asset_bindings||[])),
+        assetBindings:bindings(detail.assets,detail.event_ids.flatMap(id=>events.get(id).asset_bindings||[]),detail.ticker_stances),
         expressionSourceIds,imageSourceIds,visualDependency:visual.dependency,visualDependencyReason:visual.reason,sourceImageBindings:sourceImages.sourceImageBindings,media:sourceImages.media,originStatus:r.origin.status,baselineVersion:config.baselineVersion,
         episodeId:e.episode_id,accountId:e.account_id,
         review:{status:r.review.status,id:config.runId+':'+r.id,reviewer:r.review.reviewer,method:r.review.method}};
     };
     details.forEach((d,i)=>history.items.push(make(d,i)));
     if(!primary)throw Error('Missing primary detail '+r.id);
-    const current={...make(primary,details.indexOf(primary)),mode:'current_snapshot',description:card.description,
-      assetBindings:bindings(card.assets,r.asset_bindings)};
+    const current={...make(primary,details.indexOf(primary)),mode:'current_snapshot',description:composeVisibleProse(card.stance_sentence,card.description),
+      assetBindings:bindings(card.assets,r.asset_bindings,card.ticker_stances)};
     current.sourceIds=[...new Set([...current.sourceIds,...r.card_claims.flatMap(c=>c.evidence.map(e=>e.source_id))])];
     current.sourceCoverage=sealSourceCoverage(current,new Map(sources.map(s=>[s.id,s])),r.card_claims.flatMap(c=>c.evidence.map(e=>e.source_id)));
     snapshots.items.push(current);

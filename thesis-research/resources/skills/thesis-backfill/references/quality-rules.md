@@ -6,7 +6,7 @@ decisions are essential to this skill and apply without needing prior conversati
 ## What Qualifies As A New Thesis
 
 Recover a specific object, the person's own judgment, and a meaningful causal
-reason or concrete technical condition. A single short statement can qualify when
+non-technical reason. A single short statement can qualify when
 its context supplies the meaning. Missing a price target, holding period, stop,
 formal model or later update does not disqualify it. No author/follower quota.
 
@@ -28,10 +28,10 @@ reader edit. A position without a thesis is still recoverable history; a clear
 promotion can also contain a qualifying judgment.
 
 Support/resistance, targets, stops, add/trim zones and conditional trade plans are
-not a why by themselves. Keep them private unless the same expression explains a
-material technical pattern, volume/momentum signal, positioning structure or
-business mechanism that changes the investment view. The word `if` and a numeric
-level do not satisfy the condition test. Reported facts also need a stated
+not a why by themselves. Keep technical-only analysis private. Mixed analysis may
+qualify only when the same expression also states an independently supported
+non-technical business, valuation, risk or operating mechanism. The word `if` and
+a numeric level do not satisfy the condition test. Reported facts also need a stated
 investment implication; do not publish a card or update that merely repeats
 revenue, guidance, a price move or a news item.
 
@@ -107,14 +107,24 @@ ticker or drop a non-US company just because its logo/profile API is missing.
    judgment, driver, condition or change in the prose itself. A ticker-swap generic
    opening needs rewriting. No separate card title or headline word-count target.
    Public views emphasize the fundamental investment mechanism; technical setup
-   copy remains private in this product version.
+   copy remains private in this product version. Apply
+   [stance-opening-contract.md](stance-opening-contract.md): bare or circular
+   attractive/unattractive labels, circular case language and passive support
+   language fail even when grammatically complete. The first sentence must also
+   name the relationship that makes the mechanism intelligible: `the partnership`,
+   `the deal`, `new products` or `this platform` cannot depend on the next sentence
+   to reveal Palantir, Snap Specs, tokenized assets or another decisive identity.
+   Mechanism-specific
+   attractive/unattractive remains valid but cannot dominate the corpus.
 3. **Calibrate certainty and remain objective.** Do not attach `could` to everything. State sourced
    observations/actions directly and preserve real forecast conditions. Avoid
    stacked hedges; removing hedges must not convert an opinion into verified fact.
-4. **Body first gives the important information.** Explain source-specific evidence,
-   cause and implication. No metadata concatenation, fixed four-sentence template,
-   generic trading lesson or buried exit. Use natural English, not simplified but
-   awkward phrases such as "buyers hold the pullback".
+4. **Each sentence advances the logic.** Read stance and body as one continuous
+   passage. After the complete opening, every sentence must add distinct evidence,
+   a causal step, a condition or a risk. Integrate or remove near-synonym restatements
+   such as `It would attract more users` or `New products could support growth`.
+   Preserve any unique fact before deleting the echo. No metadata concatenation,
+   fixed four-sentence template, generic trading lesson or buried exit.
 5. **Actions, numbers and dates are exact.** Advice is not an execution, a holding
    is not a disclosed motive, and a target is not a result. Source any useful
    historical level and identify its period. Do not invent missing conditions.
@@ -206,9 +216,14 @@ equate revising a few examples with reviewing the whole collection.
   every sentence; retain the appropriate source note and specific caveats.
 - **Review prose together and against evidence.** Openings should not all use
   "X could benefit", nor should they rotate through a replacement template.
-  Eliminate repetition between the opening and supporting paragraphs. Preserve
+  Eliminate repetition between the opening and supporting paragraphs. Explicitly
+  attest that the named relationship is complete in sentence one and that the
+  first body sentence advances the argument. Preserve
   all non-prose fields and the prior editorial version; a clearer sentence is not
   permission to change facts, certainty, ownership, timing or grouping.
+- **Review the final feed as a corpus.** Concentrated opening families enter an
+  editorial queue rather than an automatic rewrite. Review flagged cards blind
+  for naturalness, then reopen the exact source before approval.
 
 Example of a longer card, with identical styling for both paragraphs:
 

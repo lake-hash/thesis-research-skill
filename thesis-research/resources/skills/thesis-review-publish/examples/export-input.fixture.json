@@ -81,6 +81,7 @@
         {
           "role": "primary",
           "symbol": "EXAMPLE",
+          "direction": "bullish",
           "verified": true
         },
         {
@@ -155,6 +156,7 @@
         {
           "role": "primary",
           "symbol": "EXAMPLE",
+          "direction": "bullish",
           "verified": true
         },
         {
@@ -229,6 +231,7 @@
         {
           "role": "primary",
           "symbol": "EXAMPLE",
+          "direction": "bullish",
           "verified": true
         },
         {

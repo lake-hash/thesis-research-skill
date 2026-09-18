@@ -5,6 +5,7 @@ import {companyMembers,imageKey,rootId} from './generation-contract.mjs';
 import {reviewedGroups} from './timeline-review-contract.mjs';
 import {mediaSourceLink} from './media-contract.mjs';
 import {proseLength} from './prose-limit.mjs';
+import {publicTickerStances} from './ticker-stance-contract.mjs';
 
 export function timelinePreview(description){
  const words=description.trim().split(/\s+/),show_more=words.length>40;
@@ -33,12 +34,14 @@ export function buildPresentation(packet,options={}){
    const context_source_ids=[...new Set(parts.flatMap(e=>e.context_source_ids||[]))],context_source_urls=context_source_ids.map(id=>sources.get(id).url);
    const id=record.id+':'+anchor.id,latest=Math.max(...events.filter(e=>e.at).map(e=>Date.parse(e.at)));
    const assets=tags(bindings);
-   details.push({id,record_id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),at:anchor.at,date_basis:anchor.date_basis,description,assets,
+   const stanceMap=new Map();for(const item of parts.flatMap(part=>publicTickerStances(part.ticker_stances))){const prior=stanceMap.get(item.ticker);if(prior&&prior!==item.stance)throw Error('Combined disclosure has conflicting ticker directions: '+record.id+'/'+item.ticker);stanceMap.set(item.ticker,item.stance);}
+   const ticker_stances=[...stanceMap].map(([ticker,stance])=>({ticker,stance}));
+   details.push({id,record_id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),at:anchor.at,date_basis:anchor.date_basis,description,assets,ticker_stances,
     source_id,source_url,source_ids,source_urls,evidence_source_ids:source_ids,evidence_source_urls:source_urls,context_source_ids,context_source_urls,event_ids:parts.map(e=>e.id),is_latest:Date.parse(anchor.at)===latest,view_latest_record_id:record.id});
    // The card already displays this source; retain its detail without a second row.
    const primarySource=sources.get(record.primary_source_id);
    const isCardSource=source_ids.includes(record.primary_source_id)||source_urls.includes(mediaSourceLink(primarySource));
-   if(!isCardSource)timeline.push({id:anchor.id,at:anchor.at,date_basis:anchor.date_basis,...timelinePreview(description),assets,source_url,detail_id:id});
+   if(!isCardSource)timeline.push({id:anchor.id,at:anchor.at,date_basis:anchor.date_basis,...timelinePreview(description),assets,ticker_stances,source_url,detail_id:id});
   }
   timeline.sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0)||a.id.localeCompare(b.id));
   const primary=events.find(e=>e.id===record.primary_event_id);
@@ -46,10 +49,10 @@ export function buildPresentation(packet,options={}){
   const claim_sources=record.card_claims.map(claim=>({id:claim.id,text:claim.text,roles:claim.roles,source_urls:[...new Set(claim.evidence.map(span=>sources.get(span.source_id).url))],evidence_sources:claim.evidence.map(span=>({source_url:sources.get(span.source_id).url,supports_roles:span.supports_roles})),detail_ids:details.filter(d=>d.record_id===record.id&&claim.evidence.some(span=>d.source_ids.includes(span.source_id)||d.context_source_ids.includes(span.source_id))).map(d=>d.id)}));
   const last_update_at=events.filter(e=>e.at).map(e=>e.at).sort((a,b)=>Date.parse(b)-Date.parse(a))[0]||null;
   const cardSourceIds=[...new Set([record.primary_source_id,...record.card_claims.flatMap(c=>c.evidence.map(s=>s.source_id))])];
-  cards.push({id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),object_key:record.object_key,description:record.description,at:primary.at,date_basis:primary.date_basis,primary_source_id:record.primary_source_id,source_url:mediaSourceLink(sources.get(record.primary_source_id)),source_ids:cardSourceIds,source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),evidence_source_ids:cardSourceIds,evidence_source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),last_update_at,claim_sources,assets:tags(record.asset_bindings),timeline,signals});
+  cards.push({id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),object_key:record.object_key,stance_sentence:record.stance_sentence,opening_plan:record.opening_plan,ticker_stances:publicTickerStances(record.ticker_stances),description:record.description,at:primary.at,date_basis:primary.date_basis,primary_source_id:record.primary_source_id,source_url:mediaSourceLink(sources.get(record.primary_source_id)),source_ids:cardSourceIds,source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),evidence_source_ids:cardSourceIds,evidence_source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),last_update_at,claim_sources,assets:tags(record.asset_bindings),timeline,signals});
  }
  cards.sort((a,b)=>Date.parse(b.at)-Date.parse(a.at)||a.id.localeCompare(b.id));
- return {generation_version:'3.1',as_of:packet.as_of,cards,details,excluded_events,aliases,image_gaps:packet.images.filter(i=>i.status!=='matched'),validation_warnings:result.warnings};
+ return {generation_version:packet.generation_policy.version,as_of:packet.as_of,cards,details,excluded_events,aliases,image_gaps:packet.images.filter(i=>i.status!=='matched'),validation_warnings:result.warnings};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(fs.realpathSync(process.argv[1])).href){
  try{const [input,output,...args]=process.argv.slice(2);if(!input||!output)throw Error('Usage: build-presentation.mjs packet.json presentation.json [--baseline previous.json] [--allow-editorial-corrections]');const i=args.indexOf('--baseline'),baseline=i>=0?JSON.parse(fs.readFileSync(args[i+1],'utf8')):undefined;

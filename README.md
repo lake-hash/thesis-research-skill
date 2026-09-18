@@ -5,8 +5,14 @@ incremental updates, review, export, and pipeline operations.
 
 ## Install
 
-Clone this repository, then copy or symlink the `thesis-research` directory into
-your Codex skills directory:
+Install directly from GitHub:
+
+```bash
+npx skills add lake-hash/thesis-research-skill --skill thesis-research -g --copy -y
+```
+
+Or clone this repository, then copy or symlink the `thesis-research` directory
+into your Codex skills directory:
 
 ```bash
 cp -R thesis-research ~/.codex/skills/thesis-research
@@ -41,6 +47,6 @@ resources are included.
 
 ```bash
 node scripts/validate-bundle.mjs
-node --test thesis-research/resources/skills/thesis-backfill/scripts/test-final-public-projection.mjs
-node --test thesis-research/resources/skills/thesis-review-publish/scripts/test-export-thesis-cards.mjs
+node --test thesis-research/resources/skills/thesis-backfill/scripts/test-*.mjs \
+  thesis-research/resources/skills/thesis-review-publish/scripts/test-*.mjs
 ```

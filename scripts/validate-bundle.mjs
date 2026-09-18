@@ -6,6 +6,22 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const skill=path.join(root,'thesis-research');
 const failures=[];
+const required=[
+ 'SKILL.md',
+ 'resources/skills/references/thesis-operation-contract.md',
+ 'resources/skills/thesis-backfill/SKILL.md',
+ 'resources/skills/thesis-backfill/references/source-fidelity-contract.md',
+ 'resources/skills/thesis-backfill/references/stance-opening-contract.md',
+ 'resources/skills/thesis-backfill/scripts/source-fidelity-contract.mjs',
+ 'resources/skills/thesis-backfill/scripts/stance-opening-contract.mjs',
+ 'resources/skills/thesis-review-publish/SKILL.md',
+ 'resources/skills/thesis-review-publish/scripts/project-thesis-feed.mjs',
+ 'resources/skills/thesis-review-publish/scripts/test-feed-projection.mjs',
+ 'resources/skills/thesis-update/SKILL.md',
+ 'resources/skills/thesis-ops/SKILL.md'
+];
+
+for(const file of required)if(!fs.existsSync(path.join(skill,file)))failures.push('Missing required package file: '+file);
 
 function walk(dir){
  return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>{
