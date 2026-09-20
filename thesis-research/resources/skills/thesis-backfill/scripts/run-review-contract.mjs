@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
 import {openingChainIssues,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
 import {publicTickersFromBindings,publicTickerStances,tickerStanceIssues} from './ticker-stance-contract.mjs';
 
@@ -8,7 +9,7 @@ const dated = v => text(v) && Number.isFinite(Date.parse(v));
 const canonical = v => Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canonical(v[k])])) : v;
 const hash = v => crypto.createHash('sha256').update(JSON.stringify(canonical(v))).digest('hex');
-export const REVIEW_CONTRACT = 'source-first/1.1';
+export const REVIEW_CONTRACT = THESIS_POLICY.reviewContract;
 
 function members(packet, record) {
   const records = list(packet.records), byId = new Map(records.map(r => [r.id, r]));
@@ -151,7 +152,7 @@ export function validateRunReview(packet, check) {
         for(const issue of tickerStanceIssues({tickerStances:r.ticker_stances,tickers:publicTickersFromBindings(event.asset_bindings),requireEvidence:false}))check(false,label+' event '+event.id+' '+issue);
         check(JSON.stringify(publicTickerStances(r.ticker_stances))===JSON.stringify(publicTickerStances(event.ticker_stances)),label+' event review ticker stances differ from the source-bound event '+event.id);
         check(r.timeline_opening_contract===TIMELINE_OPENING_CONTRACT&&r.metadata_hidden_direction_clear===true,label+' event needs a metadata-independent Timeline opening review '+event.id);
-        for(const issue of timelineOpeningIssues({body:event.description,openingConclusion:r.what,openingReason:r.why,stanceClause:r.stance_clause,mechanismClause:r.mechanism_clause,stanceRealizations:r.stance_realizations,tickerStances:r.ticker_stances}))check(false,label+' event '+event.id+' '+issue);
+        for(const issue of timelineOpeningIssues({body:event.description,openingConclusion:r.what,openingReason:r.why,stanceClause:r.stance_clause,mechanismClause:r.mechanism_clause,stanceRealizations:r.stance_realizations,tickerStances:r.ticker_stances,sourceExplicitDirection:r.source_explicit_direction}))check(false,label+' event '+event.id+' '+issue);
       }
       exactEvidence(r?.evidence, [...list(event.source_ids), ...list(event.context_source_ids)], label + ' event ' + event.id);
     }

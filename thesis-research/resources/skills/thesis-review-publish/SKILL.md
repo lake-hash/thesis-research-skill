@@ -3,101 +3,52 @@ name: thesis-review-publish
 description: Perform agent-owned source and content review of thesis candidates, resolve attribution and grouping, and publish eligible changes within user-authorized scope with version and history safeguards. Use after backfill or incremental processing.
 ---
 
-# thesis-review-publish
+# Thesis Review And Publish
 
-Before generating, revising or delivering candidates, apply the
-[current-run review and batch gates](../thesis-backfill/references/run-review.md). New runs require
-`review_contract: source-first/1.1`, version-bound claim/event review, a recorded
-Signals search, and asset/basket matching against active and pending records.
-Run the strict packet, presentation and batch checks; generic pass flags alone
-are not source-first review. Old packets remain archives until reviewed for delivery.
+Act as the evidence gate between generated candidates and public Thesis content.
 
-Check the final rendered catalog, not just approval flags: reject a held or
-source-only primary source, missing supporting hyperlinks, future historical
-context and duplicate author/asset histories hidden by multi-ticker labels.
-Preserve separate trade episodes and freeze each reviewed outside Signal's
-source, body and date. Apply the shared generation contract to legacy adapters too.
+## Required Contract
 
-New or rewritten visible thesis/update prose must pass the
-[500-character limit](../thesis-backfill/references/generation-contract.md).
-Require `generation_policy.prose_max_chars: 500` and `--require-prose-limit` on
-the research packet; current Thesis body includes its prepended stance sentence,
-while Timeline uses its dated description. Exclude the trailing original-link footer from the count.
-Check that compression preserved source meaning and historical transaction
-periods. Return over-limit drafts for rewriting, not truncation. Do not rewrite
-unchanged published history solely to satisfy this new generation rule.
+Read the shared [Thesis core contract](../references/thesis-core-contract.md), then
+the executable [review workflow](references/review-workflow.md). For product
+handoff, also read the [ThesisCard contract](references/thesis-card-contract.md).
 
-Apply [source stability](../thesis-backfill/references/source-stability.md). Current
-preparation uses input 1.1 with sourceCoverage. Run `scripts/validate-delivery.mjs`
-on actual final cards and the untouched manifest before publication. A passed
-format/quote check cannot replace semantic source review or event reconciliation.
+## Review Workflow
 
-Use [review-workflow.md](references/review-workflow.md) for executable local queue
-intake and version-bound agent review. Do not require manual candidate approval.
-Agent acceptance, batch authorization and verified publication are separate facts.
-Unverifiable interviews are skipped after transcript fallback, not sent to the
-user for approval. Preserve existing legacy decisions without fabricating new ones.
+1. Reconstruct the claim from originals and contemporaneous context before reading
+   the proposed prose as an answer.
+2. Check attribution, source fidelity, company grouping, chronology, event-local
+   ticker/direction, media relevance, what/why and Timeline increment.
+3. Review the final composed visible passage. Current Thesis body is
+   `stance_sentence + description`; Timeline uses the dated description. Enforce
+   natural stance-first language and the shared 500-character limit.
+4. Review every visible final card and Timeline row after grouping, source
+   selection and overrides. Bind the decision to the exact presentation hash.
+5. Return approve, revise, hold, merge or reclassify with a specific evidence-based
+   reason. Edited content requires a fresh claim map and review hash.
+6. Validate the reviewed fact ledger before language generation, then validate
+   packet, presentation, batch, ThesisCard delivery and Feed projection.
+   The chronological Feed uses `feedItems`; a selected item must be projected as
+   a point-in-time current expression with only strictly earlier Timeline rows.
+7. Publish only within the user's authorized scope. Verify readback and record a
+   publication receipt matching the approved content hash and release version.
 
-Read [thesis-review-publish.md](thesis-review-publish.md) for the workflow.
-Use [increment review](../thesis-backfill/references/update-increment-review.md)
-to distinguish meaningful updates, source-only repetition, same-document pages
-and unresolved context. A review recommendation is not itself source evidence.
-Use [selection and source media](../thesis-backfill/references/selection-and-source-media.md)
-to reject theses without what plus why, updates without a material thesis
-increment, inferred/subjective prose, and mismatches between reviewed visual
-relevance and final card media.
-Final delivery uses `final-public/1.3`: every visible expression needs a complete
-mechanism why, explicit ticker roles, operation/process-language clearance,
-coherent sentences and a repetition decision. Sidecar booleans do not override
-deterministic text failures.
-For cards and Timeline updates, apply the shared
-[stance opening contract](../thesis-backfill/references/stance-opening-contract.md).
-Review `specific_directional_state`, `mechanism_visible_early`,
-`professional_voice`, `natural_collocation`, `non_tautological` and
-`non_template` independently. Also require `relationship_complete`: the opening
-names any counterparty, product or event needed to understand the mechanism, and
-`continuation_advances`: the following prose adds distinct evidence, causality,
-condition or risk rather than paraphrasing the opening. Review the rendered passage,
-not stance and body fields in isolation. Timeline review reconstructs the
-source-date direction from the already reviewed `what`, `why` and increment; it
-does not copy the current card ticker set or direction backward through history. Corpus
-concentration warnings require an explicit
-editorial decision; never auto-rewrite unchanged cards merely to satisfy a style
-quota.
-Every main card and Timeline row must have at least one ticker and exactly one
-source-backed `bullish`, `bearish` or `none` direction for every displayed
-ticker. The ticker sets and directions may differ across dates. For Timeline,
-require `source-backed-timeline-opening/1.2`, exact stance/mechanism clauses,
-per-ticker realization spans and a metadata-hidden direction check,
-`direction_visible_immediately`, `mechanism_visible_immediately`,
-`relationship_complete` and `continuation_advances`. Review each update at its
-own date; it may be positive, negative or conditional, but it must not import the
-current card's later state or force a stance enum onto historical evidence.
-Before product-field handoff, read [ThesisCard export contract](references/thesis-card-contract.md).
-Validate the exact Thesis Feed shape before handoff: only `thesisId`, `type`,
-`createdAtMs`, `author`, `body`, `tickers` and `media`; `type` is only
-`new_thesis` or `thesis_update`; product directions are `bullish`, `bearish` or
-`none`; and `media` is always present, including as `[]`. Internal review
-metadata, titles and source fields stay in the packet or manifest.
+Audio/video review additionally loads
+`../thesis-backfill/references/multimedia.md`. Unverifiable speech is skipped after
+documented fallback attempts; it is not sent to the user for raw-text approval.
 
-Use current author/company grouping and immutable dated events. Generate body
-prose with named Markdown original links at the end of body; no public sources or
-source field. Keep original evidence in the private packet/manifest. Export
-with persisted feed IDs, never model-assigned production numbers. Hold gaps
-and preserve existing user authorization for publishing and notifications.
+## Unified Commands
 
-Use `scripts/prepare-card-export.mjs` for validated generation packets. Review
-`gaps.json` and both manifests before handoff. Current snapshots and immutable
-history use separate routes; `local_preview` allocations are not publishable.
-Reconcile reviewed keeps against exported event IDs, including merged aliases.
-An old `REAFFIRM` label cannot veto an explicit source-backed increment; missing
-export prerequisites must preserve content approval and surface a separate blocker.
-For Thesis Feed delivery, run `scripts/project-thesis-feed.mjs` against the
-prepared bundle. It verifies author-scoped thesis grouping, current/history event
-alignment, chronological Timeline order and expression-local ticker/media payloads.
-The Feed, not this skill, owns click behavior, typography, image sizing and zoom.
+```bash
+node ../thesis-backfill/scripts/thesis-pipeline.mjs validate packet.json
+node ../thesis-backfill/scripts/thesis-pipeline.mjs presentation packet.json presentation.json
+node ../thesis-backfill/scripts/thesis-pipeline.mjs final packet.json presentation.json final-review.json
+node ../thesis-backfill/scripts/thesis-pipeline.mjs prepare-feed packet.json export-config.json NEW-output-dir
+node ../thesis-backfill/scripts/thesis-pipeline.mjs delivery cards.json ingestion-manifest.json
+node ../thesis-backfill/scripts/thesis-pipeline.mjs project-feed playbook-data.json feed-projection.json
+```
 
-For podcast/interview candidates, read
-[multimedia.md](../thesis-backfill/references/multimedia.md). Verify speaker and
-ASR evidence before approval. Seek links belong in source URLs; audio/video
-provenance belongs in the manifest, not extra ThesisCard fields.
+The Feed owns interaction and styling. This skill owns the reviewed seven-field
+cards, source coverage, stable identities, expression-local ticker/media values,
+and the temporal Feed handoff contract. It does not publish a frontend change by
+itself.

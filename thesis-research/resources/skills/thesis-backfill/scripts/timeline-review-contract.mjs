@@ -25,7 +25,7 @@ export function validateTimelineReview(record,events,sources,check,{fundamentalO
    if(r.timeline_opening_contract!==undefined){
     check(r.timeline_opening_contract===TIMELINE_OPENING_CONTRACT,label+' needs '+TIMELINE_OPENING_CONTRACT);
     check(r.direction_visible_immediately===true&&r.mechanism_visible_immediately===true&&r.relationship_complete===true&&r.continuation_advances===true&&r.metadata_hidden_direction_clear===true,label+' needs a complete Timeline opening/progression review');
-    for(const issue of timelineOpeningIssues({body:e?.description||e?.body,openingConclusion:r.opening_conclusion||r.what,openingReason:r.opening_reason||r.why,stanceClause:r.stance_clause,mechanismClause:r.mechanism_clause,stanceRealizations:r.stance_realizations,tickerStances:e?.ticker_stances}))check(false,label+' '+issue);
+    for(const issue of timelineOpeningIssues({body:e?.description||e?.body,openingConclusion:r.opening_conclusion||r.what,openingReason:r.opening_reason||r.why,stanceClause:r.stance_clause,mechanismClause:r.mechanism_clause,stanceRealizations:r.stance_realizations,tickerStances:e?.ticker_stances,sourceExplicitDirection:r.source_explicit_direction}))check(false,label+' '+issue);
    }
   }
   if(r?.disposition==='source_only'){

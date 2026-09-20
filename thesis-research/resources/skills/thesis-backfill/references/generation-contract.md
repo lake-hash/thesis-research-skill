@@ -1,5 +1,9 @@
 # Generation Contract 3.2
 
+This file expands drafting, history and presentation behavior under the shared
+[Thesis core contract](../../references/thesis-core-contract.md). It must not
+redefine admission, source-fidelity or delivery policy.
+
 This contract carries the approved product decisions into every new backfill.
 It supersedes older mechanism-level splitting and Timeline-title conventions.
 Do not hardcode author counts, ticker quotas, release IDs or dated examples into
@@ -52,15 +56,22 @@ investment. A simpler word with the same missing context is not a successful edi
   source-backed `bullish`, `bearish` or `none` direction per displayed ticker.
   Different tickers in one expression may have different directions. The exact
   first visible sentence remains a natural `stance_sentence` under
-  `source-backed-opening/1.3` and the shared
+  `source-backed-opening/1.4` and the shared
   [stance opening contract](stance-opening-contract.md). Derive it from the author's
   sourced judgment, not the model's company view. Attractive/unattractive is valid
   only when the same sentence names the specific mechanism and the family is not
   overused. Bare attractiveness, appealing/compelling and `the case is strong/weak`
-  labels are invalid. Do not copy Bullish/Bearish/Neutral enum words into prose.
-  Valid states include
-  strengthening, weakening, constrained, exposed, undervalued, stretched,
-  execution-dependent and conditional upside. Adjacent duplicate families fail;
+  labels are invalid. Bullish/Bearish/Neutral wording is permitted only when the
+  same source expression explicitly uses it, exact evidence is retained and the
+  opening includes the decisive mechanism. Record
+  `opening_plan.source_explicit_direction: true`; otherwise do not copy enum words
+  from metadata into prose.
+  Lead with the professional judgment axis and consequence, such as an improving
+  earnings outlook, stretched valuation, weakening competitive position, changing
+  demand/pricing outlook or explicit risk/reward. Generic company-first templates
+  such as `X has upside`, `X could benefit`, `X looks stronger`, `X is well
+  positioned`, `X is execution-dependent` and `X offers an opportunity` fail.
+  Adjacent duplicate families fail;
   rolling-window or catalog concentration enters corpus editorial review rather
   than automatic synonym rotation. Neutral is valid only for a source-supported
   balanced view, not as a fallback for unresolved review.
@@ -140,7 +151,7 @@ An author's own explicit revision or historical comparison can be retained; lead
 with the operative view at that date. Do not erase a source-backed reversal just
 to avoid comparative language.
 
-Apply `source-backed-timeline-opening/1.2` to each visible update. Sentence one
+Apply `source-backed-timeline-opening/1.3` to each visible update. Sentence one
 states the dated directional implication and the source-backed mechanism together,
 including any named company, product, counterparty or transaction needed to
 understand it. The next sentence may add only contemporaneous evidence, condition

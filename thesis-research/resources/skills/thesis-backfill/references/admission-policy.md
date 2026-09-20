@@ -1,5 +1,9 @@
 # Thesis Admission Policy 1.4
 
+This file expands the admission section of the shared
+[Thesis core contract](../../references/thesis-core-contract.md). The core
+contract and `thesis-policy.mjs` own cross-workflow rules and version values.
+
 This is the canonical selection policy for new backfills and updates. It
 supersedes conflicting legacy examples or permissive classifier wording. When
 another reference appears to disagree, stop and resolve the conflict rather than
@@ -21,12 +25,24 @@ source-backed non-technical judgment and why independently qualify.
 
 ## Thesis Admission
 
-A public thesis requires all three:
+A public thesis requires all four:
 
 1. a specific investable company, security or asset resolved to a verified ticker;
 2. the target author's own judgment or expectation (`what`); and
 3. at least one reason, causal mechanism or fundamental condition stated by that
    author in the complete contemporaneous expression (`why`).
+4. a source-owned investment landing such as valuation, expected outcome,
+   risk/reward, preference, durable competitive view, catalyst or invalidation.
+
+An earnings summary, stock-reaction explanation, objective result or statement
+that execution matters is not a Thesis by itself. Without an investment landing,
+retain it as evidence or `source_only` rather than writing a balanced public card.
+
+Event framing does not cancel an otherwise complete Thesis. A policy meeting,
+macro catalyst, volatility warning or short-term risk may be the condition or
+invalidation inside a source-owned valuation, outlook or risk/reward judgment.
+Apply the four admission requirements to the complete expression before deciding
+that it is only event commentary.
 
 Buys, sells, holdings, sizing, targets, stops, returns, watchlists, objective news
 and unexplained bullish/bearish language are private history, not theses. Do not
@@ -112,8 +128,10 @@ The memo opening follows the shared
 condition. Attractive/unattractive is allowed only with an immediate mechanism
 and corpus diversity review; a bare label is invalid. The direction is visible in
 the first clause and the decisive mechanism, including any necessary named
-relationship, appears in the same first sentence. Bullish/Bearish/Neutral remain
-tag metadata and do not appear as generated public-prose labels. Adjacent duplicate opening families fail; rolling
+relationship, appears in the same first sentence. Bullish/Bearish/Neutral may
+appear only when the author explicitly uses the word in that expression and the
+same sentence supplies the mechanism; otherwise they remain tag metadata.
+Adjacent duplicate opening families fail; rolling
 or catalog concentration requires corpus editorial review and never triggers
 automatic synonym rotation.
 The following body supplies the mechanism, evidence and conditions. `Visa, Mastercard and Ant International developed the Know-Your-Agent framework` is evidence; it is incomplete as an opening until the prose explains what that means for the investment. The opening uses regular black body text, not bold or green/red emphasis.

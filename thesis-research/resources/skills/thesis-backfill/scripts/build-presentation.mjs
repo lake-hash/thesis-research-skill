@@ -18,6 +18,19 @@ export function buildPresentation(packet,options={}){
  const secure=url=>{try{return new URL(url).protocol==='https:'?url:null;}catch{return null;}};
  const picture=(kind,key)=>{const p=images.get(kind+':'+key);return secure(p?.url)||secure(p?.fallback_url);};
  const tags=bindings=>(bindings||[]).filter(b=>['primary','vehicle'].includes(b.role)).map(b=>({name:b.entity_name,symbol:b.symbol,market:b.market,image_url:picture('security',imageKey(b)),...(b.display_note?{display_note:b.display_note}:{})}));
+ const expressionMedia=parts=>{
+  const media=[],media_gaps=[],seen=new Set(),levels={none:0,helpful:1,required:2,unresolved:3};
+  let media_dependency='none';
+  for(const event of parts){if((levels[event.visual_dependency]??3)>levels[media_dependency])media_dependency=event.visual_dependency;
+   for(const binding of event.media_bindings||[]){const key=binding.source_id+'|'+binding.attachment_id;if(seen.has(key))continue;seen.add(key);
+    if(binding.disposition==='retrieval_gap'){media_gaps.push({source_id:binding.source_id,attachment_id:binding.attachment_id,reason:binding.reason});continue;}
+    if(binding.disposition!=='include')continue;const source=sources.get(binding.source_id),attachment=source?.attachments?.find(item=>item.id===binding.attachment_id);
+    if(!attachment)throw Error('Included presentation image is missing from source inventory: '+key);
+    media.push({type:'image',cover_url:attachment.cover_url,...(attachment.url?{url:attachment.url}:{}),source_id:binding.source_id,source_url:mediaSourceLink(source),attachment_id:binding.attachment_id,...(binding.context_image_role?{context_image_role:binding.context_image_role}:{})});
+   }
+  }
+  return{media,media_gaps,media_dependency};
+ };
  const cards=[],details=[],excluded_events=[],aliases=Object.fromEntries(packet.records.filter(r=>r.superseded_by).map(r=>[r.id,rootId(r,packet.records)]));
  for(const record of packet.records.filter(r=>!r.superseded_by&&r.type!=='context'&&r.review?.status==='approved')){
   const members=companyMembers(record,packet.records),events=members.flatMap(m=>m.events),reviewed=reviewedGroups(record,events);
@@ -36,12 +49,13 @@ export function buildPresentation(packet,options={}){
    const assets=tags(bindings);
    const stanceMap=new Map();for(const item of parts.flatMap(part=>publicTickerStances(part.ticker_stances))){const prior=stanceMap.get(item.ticker);if(prior&&prior!==item.stance)throw Error('Combined disclosure has conflicting ticker directions: '+record.id+'/'+item.ticker);stanceMap.set(item.ticker,item.stance);}
    const ticker_stances=[...stanceMap].map(([ticker,stance])=>({ticker,stance}));
+   const mediaState=expressionMedia(parts);
    details.push({id,record_id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),at:anchor.at,date_basis:anchor.date_basis,description,assets,ticker_stances,
-    source_id,source_url,source_ids,source_urls,evidence_source_ids:source_ids,evidence_source_urls:source_urls,context_source_ids,context_source_urls,event_ids:parts.map(e=>e.id),is_latest:Date.parse(anchor.at)===latest,view_latest_record_id:record.id});
+    source_id,source_url,source_ids,source_urls,evidence_source_ids:source_ids,evidence_source_urls:source_urls,context_source_ids,context_source_urls,event_ids:parts.map(e=>e.id),is_latest:Date.parse(anchor.at)===latest,view_latest_record_id:record.id,...mediaState});
    // The card already displays this source; retain its detail without a second row.
    const primarySource=sources.get(record.primary_source_id);
    const isCardSource=source_ids.includes(record.primary_source_id)||source_urls.includes(mediaSourceLink(primarySource));
-   if(!isCardSource)timeline.push({id:anchor.id,at:anchor.at,date_basis:anchor.date_basis,...timelinePreview(description),assets,ticker_stances,source_url,detail_id:id});
+   if(!isCardSource)timeline.push({id:anchor.id,at:anchor.at,date_basis:anchor.date_basis,...timelinePreview(description),assets,ticker_stances,source_url,detail_id:id,...mediaState});
   }
   timeline.sort((a,b)=>(Date.parse(b.at)||0)-(Date.parse(a.at)||0)||a.id.localeCompare(b.id));
   const primary=events.find(e=>e.id===record.primary_event_id);
@@ -49,7 +63,10 @@ export function buildPresentation(packet,options={}){
   const claim_sources=record.card_claims.map(claim=>({id:claim.id,text:claim.text,roles:claim.roles,source_urls:[...new Set(claim.evidence.map(span=>sources.get(span.source_id).url))],evidence_sources:claim.evidence.map(span=>({source_url:sources.get(span.source_id).url,supports_roles:span.supports_roles})),detail_ids:details.filter(d=>d.record_id===record.id&&claim.evidence.some(span=>d.source_ids.includes(span.source_id)||d.context_source_ids.includes(span.source_id))).map(d=>d.id)}));
   const last_update_at=events.filter(e=>e.at).map(e=>e.at).sort((a,b)=>Date.parse(b)-Date.parse(a))[0]||null;
   const cardSourceIds=[...new Set([record.primary_source_id,...record.card_claims.flatMap(c=>c.evidence.map(s=>s.source_id))])];
+  const primaryDetail=details.find(detail=>detail.record_id===record.id&&detail.event_ids.includes(record.primary_event_id));
+  if(!primaryDetail)throw Error('Missing primary presentation detail '+record.id+'/'+record.primary_event_id);
   cards.push({id:record.id,author_id:record.author_id,author_image_url:picture('person',record.author_id),object_key:record.object_key,stance_sentence:record.stance_sentence,opening_plan:record.opening_plan,ticker_stances:publicTickerStances(record.ticker_stances),description:record.description,at:primary.at,date_basis:primary.date_basis,primary_source_id:record.primary_source_id,source_url:mediaSourceLink(sources.get(record.primary_source_id)),source_ids:cardSourceIds,source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),evidence_source_ids:cardSourceIds,evidence_source_urls:cardSourceIds.map(id=>mediaSourceLink(sources.get(id))),last_update_at,claim_sources,assets:tags(record.asset_bindings),timeline,signals});
+  Object.assign(cards.at(-1),{media:primaryDetail.media,media_gaps:primaryDetail.media_gaps,media_dependency:primaryDetail.media_dependency});
  }
  cards.sort((a,b)=>Date.parse(b.at)-Date.parse(a.at)||a.id.localeCompare(b.id));
  return {generation_version:packet.generation_policy.version,as_of:packet.as_of,cards,details,excluded_events,aliases,image_gaps:packet.images.filter(i=>i.status!=='matched'),validation_warnings:result.warnings};

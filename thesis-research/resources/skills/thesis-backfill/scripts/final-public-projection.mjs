@@ -9,7 +9,7 @@ import {
  tickerRoleIssues,whyQualityIssues
 } from './public-content-gates.mjs';
 import {sourceFidelityIssues} from './source-fidelity-contract.mjs';
-import {openingChainIssues,openingDiversityReview,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
+import {openingChainIssues,openingDiversityReview,timelineDiversityReview,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_DIVERSITY_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
 import {publicTickerStances,tickerStanceIssues,TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
 
 export const FINAL_PUBLIC_REVIEW=FINAL_PUBLIC_REVIEW_SCHEMA;
@@ -33,13 +33,13 @@ export function publicExpressions(presentation){
  for(const card of list(presentation?.cards)){
  rows.push({id:'card:'+card.id,kind:'card',record_id:card.id,description:card.description,
    source_id:card.primary_source_id,source_url:card.source_url,published_at:card.at,
-   tickers:list(card.assets).map(asset=>asset.symbol),ticker_stances:publicTickerStances(card.ticker_stances),media_dependency:card.media_dependency||'none',stance_sentence:card.stance_sentence,opening_plan:card.opening_plan});
+   tickers:list(card.assets).map(asset=>asset.symbol),ticker_stances:publicTickerStances(card.ticker_stances),media_dependency:card.media_dependency||'none',media:list(card.media),media_gaps:list(card.media_gaps),media_sha256:sha({media:list(card.media),media_gaps:list(card.media_gaps),dependency:card.media_dependency||'none'}),stance_sentence:card.stance_sentence,opening_plan:card.opening_plan});
   for(const item of list(card.timeline)){
    const detail=list(presentation.details).find(row=>row.id===item.detail_id);
    rows.push({id:'timeline:'+item.detail_id,kind:'timeline',record_id:card.id,event_id:item.id,
     description:detail?.description,source_id:detail?.source_id,source_url:item.source_url||detail?.source_url,
     published_at:item.at,tickers:list(item.assets).map(asset=>asset.symbol),ticker_stances:publicTickerStances(item.ticker_stances),
-    media_dependency:detail?.media_dependency||'none'});
+    media_dependency:detail?.media_dependency||'none',media:list(detail?.media),media_gaps:list(detail?.media_gaps),media_sha256:sha({media:list(detail?.media),media_gaps:list(detail?.media_gaps),dependency:detail?.media_dependency||'none'})});
   }
  }
  return rows;
@@ -64,6 +64,10 @@ export function validateFinalProjection(packet,presentation,review){
   check(text(card.source_url),label+' needs exactly one public source URL');
   check(text(card.at),label+' needs a source-bound date');
   check(list(card.assets).length>0,label+' needs a verified investable object');
+  check(Array.isArray(card.media)&&Array.isArray(card.media_gaps),label+' needs deterministic media and media_gaps arrays');
+  if(card.media_dependency==='required')check(list(card.media).length>0,label+' required media is missing from the presentation');
+  if(card.media_dependency==='helpful')check(list(card.media).length>0||list(card.media_gaps).length>0,label+' helpful media is missing without a retrieval gap');
+  if((card.media_dependency||'none')==='none')check(list(card.media).length===0&&list(card.media_gaps).length===0,label+' media appears despite visual_dependency none');
   for(const issue of tickerStanceIssues({tickerStances:card.ticker_stances,tickers:list(card.assets).map(asset=>asset.symbol),requireEvidence:false}))errors.push(label+' '+issue);
   check(naturalStanceSentence(card.stance_sentence),label+' needs a natural directional conclusion rather than a stance label');
   for(const issue of openingChainIssues({stanceSentence:card.stance_sentence,body:card.description,subject:card.opening_plan?.subject,openingPlan:card.opening_plan,tickerStances:card.ticker_stances}))errors.push(label+' '+issue);
@@ -85,6 +89,11 @@ export function validateFinalProjection(packet,presentation,review){
    check(item.at===detail?.at,context+' preview/detail dates differ');
    check(proseLength(detail?.description||'')<=500,context+' detail exceeds 500 characters');
    check(list(item.assets).length>0,context+' needs its own ticker set');
+   check(Array.isArray(item.media)&&Array.isArray(item.media_gaps)&&Array.isArray(detail?.media)&&Array.isArray(detail?.media_gaps),context+' needs deterministic media projection');
+   check(JSON.stringify(canonical(item.media))===JSON.stringify(canonical(detail?.media))&&JSON.stringify(canonical(item.media_gaps))===JSON.stringify(canonical(detail?.media_gaps)),context+' preview/detail media differ');
+   if(detail?.media_dependency==='required')check(list(detail?.media).length>0,context+' required media is missing from the presentation');
+   if(detail?.media_dependency==='helpful')check(list(detail?.media).length>0||list(detail?.media_gaps).length>0,context+' helpful media is missing without a retrieval gap');
+   if((detail?.media_dependency||'none')==='none')check(list(detail?.media).length===0&&list(detail?.media_gaps).length===0,context+' media appears despite visual_dependency none');
    for(const issue of tickerStanceIssues({tickerStances:item.ticker_stances,tickers:list(item.assets).map(asset=>asset.symbol),requireEvidence:false}))errors.push(context+' '+issue);
    const expected=item.preview===undefined?null:(detail.description.trim().split(/\s+/).length>40);
    if(expected!==null)check(item.show_more===expected,context+' Show more does not match the 40-word rule');
@@ -94,6 +103,15 @@ export function validateFinalProjection(packet,presentation,review){
  for(const issue of diversity.errors)errors.push('Opening diversity: '+issue);
  for(const issue of diversity.warnings)warnings.push('Opening diversity: '+issue);
  if(diversity.warnings.length)check(review?.opening_distribution_review?.contract===STANCE_OPENING_CONTRACT&&review?.opening_distribution_review?.decision==='approved'&&review?.opening_distribution_review?.warning_count===diversity.warnings.length&&text(review?.opening_distribution_review?.reason),'Opening diversity warnings require a corpus-level editorial decision');
+ const timelineGroups=list(presentation?.cards).filter(card=>list(card.timeline).length>0).map(card=>({record_id:card.id,subject:card.opening_plan?.subject,values:list(card.timeline).map(item=>detailMap.get(item.detail_id)?.description||'')}));
+ const timelineDiversity=timelineDiversityReview(timelineGroups);
+ for(const issue of timelineDiversity.errors)errors.push('Timeline diversity: '+issue);
+ for(const issue of timelineDiversity.warnings)warnings.push('Timeline diversity: '+issue);
+ if(timelineDiversity.warnings.length){
+  const expectedIds=timelineGroups.map(group=>group.record_id).sort();
+  const reviewedIds=sorted(list(review?.timeline_distribution_review?.reviewed_record_ids));
+  check(review?.timeline_distribution_review?.contract===TIMELINE_DIVERSITY_CONTRACT&&review?.timeline_distribution_review?.decision==='approved'&&review?.timeline_distribution_review?.warning_count===timelineDiversity.warnings.length&&JSON.stringify(reviewedIds)===JSON.stringify(expectedIds)&&text(review?.timeline_distribution_review?.reason),'Timeline diversity warnings require a sequence-level editorial decision');
+ }
  for(const row of expressions){
  check(text(row.description),row.id+' has no public prose');
   const visibleText=row.kind==='card'?composeVisibleProse(row.stance_sentence,row.description):row.description;
@@ -101,7 +119,6 @@ export function validateFinalProjection(packet,presentation,review){
   for(const issue of sourceFidelityIssues({prose:visibleText,sources:sourceMap,allowedSourceIds:[row.source_id]}))errors.push(row.id+' '+issue);
   check(matchedPatterns(visibleText,processLanguagePatterns).length===0,row.id+' exposes source/reviewer narration');
   check(matchedPatterns(visibleText,portfolioOperationPatterns).length===0,row.id+' exposes portfolio/trade operation language');
-  check(!/\b(?:bullish|bearish|neutral)\b/i.test(visibleText),row.id+' exposes ticker-direction metadata inside public prose');
   for(const issue of proseQualityIssues(row.description,{prefixes:row.kind==='card'?[row.stance_sentence]:[]}))errors.push(row.id+' '+issue);
   check(!abstractWhyLanguage.test(row.description||''),row.id+' uses an abstract why without a concrete mechanism');
  }
@@ -118,6 +135,18 @@ export function validateFinalProjection(packet,presentation,review){
   const row=reviewRows.get(expression.id),label='Final review '+expression.id;
   check(!!row,label+' is missing');if(!row)continue;
   check(row.decision==='approved'&&text(row.reason),label+' is not approved with a concrete reason');
+  const visibleText=expression.kind==='card'?composeVisibleProse(expression.stance_sentence,expression.description):expression.description;
+  const directionWords=[...visibleText.matchAll(/\b(bullish|bearish|neutral)\b/gi)].map(match=>match[1].toLowerCase());
+  if(directionWords.length){
+   const original=sourceMap.get(expression.source_id)?.text||'';
+   check(row.source_explicit_direction===true,label+' uses Bullish/Bearish/Neutral without a source-explicit review decision');
+   if(expression.kind==='card')check(expression.opening_plan?.source_explicit_direction===true,label+' direct direction wording is missing from the reviewed opening plan');
+   for(const word of new Set(directionWords)){
+    check(new RegExp(`\\b${word}\\b`,'i').test(original),label+' uses '+word+' although the expression source does not');
+    const stance=word==='neutral'?'none':word;
+    check(expression.ticker_stances.some(item=>item.stance===stance),label+' uses '+word+' without a matching expression-level ticker stance');
+   }
+  }
   check(row.source_id===expression.source_id&&row.source_url===expression.source_url&&row.published_at===expression.published_at,
    label+' source/date no longer matches the rendered expression');
   check(JSON.stringify(sorted(list(row.tickers)))===JSON.stringify(sorted(expression.tickers)),label+' ticker review differs from rendered tags');
@@ -133,12 +162,14 @@ export function validateFinalProjection(packet,presentation,review){
    check(['fundamental','mixed'].includes(row.increment_domain),label+' Timeline needs a non-technical thesis increment');
    if(row.content_domain==='mixed'||row.increment_domain==='mixed')check(text(row.fundamental_increment),label+' mixed Timeline content needs an independently qualifying non-technical increment');
    check(row.timeline_opening_contract===TIMELINE_OPENING_CONTRACT&&row.direction_visible_immediately===true&&row.mechanism_visible_immediately===true&&row.relationship_complete===true&&row.continuation_advances===true&&row.metadata_hidden_direction_clear===true,label+' lacks the dated Timeline opening/progression review');
-   for(const issue of timelineOpeningIssues({body:expression.description,openingConclusion:row.opening_conclusion,openingReason:row.opening_reason,stanceClause:row.stance_clause,mechanismClause:row.mechanism_clause,stanceRealizations:row.stance_realizations,tickerStances:row.ticker_stances}))errors.push(label+' '+issue);
+   for(const issue of timelineOpeningIssues({body:expression.description,openingConclusion:row.opening_conclusion,openingReason:row.opening_reason,stanceClause:row.stance_clause,mechanismClause:row.mechanism_clause,stanceRealizations:row.stance_realizations,tickerStances:row.ticker_stances,sourceExplicitDirection:row.source_explicit_direction}))errors.push(label+' '+issue);
   }
   if(expression.kind==='card')check(row.increment_kind===null||row.increment_kind===undefined,label+' card must not masquerade as a Timeline increment');
   check(row.direct_voice===true&&row.no_inference===true&&row.source_fidelity===true,
    label+' must pass direct-voice, no-inference and source-fidelity review');
   check(row.ticker_complete===true&&row.media_complete===true,label+' ticker/media completeness is unresolved');
+  check(row.media_sha256===expression.media_sha256&&row.media_count===expression.media.length&&row.media_gap_count===expression.media_gaps.length,label+' media review is stale or not bound to the rendered expression');
+  for(const media of expression.media)check(text(media?.cover_url)&&/^https:\/\//.test(media.cover_url)&&text(media?.source_id)&&text(media?.attachment_id),label+' contains untraceable rendered media');
   for(const issue of tickerRoleIssues(row,expression.tickers,{allowRecordResolution:expression.kind==='timeline'}))errors.push(label+' '+issue);
   for(const issue of whyQualityIssues(row.why))errors.push(label+' '+issue);
   check(row.why_complete_sentence===true,label+' why has not been reviewed as a complete sentence');

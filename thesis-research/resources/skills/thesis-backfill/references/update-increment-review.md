@@ -10,7 +10,7 @@ increment in the prose. A generic bullish summary can erase the very reason to
 keep an update. Do not then classify the damaged summary as redundant.
 
 For a visible update, write the retained increment under
-`source-backed-timeline-opening/1.2`: the first sentence combines that date's
+`source-backed-timeline-opening/1.3`: the first sentence combines that date's
 directional investment meaning with its decisive mechanism. It names any necessary
 counterparty, product or transaction. Later sentences add only evidence, conditions
 or risk available at that date; they cannot repeat the opening or import the current

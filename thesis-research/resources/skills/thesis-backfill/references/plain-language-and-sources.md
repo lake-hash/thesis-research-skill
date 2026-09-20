@@ -65,10 +65,10 @@ must be recovered from evidence or omitted, not filled with a plausible story.
 The opening must be understandable as a standalone conclusion. `An agent chooses
 stores and products` is background; `Shopify could lose influence because shopping
 agents may control product discovery and merchant choice` is a conclusion.
-`ChatGPT uses PitchBook` is a fact; `Morningstar's data business could benefit
+`ChatGPT uses PitchBook` is a fact; `Morningstar's data-licensing outlook improves
 because AI financial assistants may license PitchBook rather than rebuild it`
-states the investment implication. Preserve source certainty and do not force
-every opening into the words `could benefit`.
+states the investment implication. Preserve source certainty and state the
+professional judgment axis rather than falling back to `could benefit`.
 
 ## Primary Source Is Not Latest Activity
 
@@ -131,8 +131,8 @@ newest card's combined explanation.
 
 ## Two Required Reviews
 
-Use the [generation prompt](../prompts/generate.md) and then the
-[review prompt](../prompts/review.md). Default to two distinct passes in the current
+Compile the `generate` stage prompt and then the `review` stage prompt with
+`scripts/thesis-pipeline.mjs prompt`. Default to two distinct passes in the current
 task; do not start other agents without authorization.
 
 First, read the draft as a reader who has not seen the sources. Flag an unclear

@@ -1,4 +1,6 @@
-export const SOURCE_FIDELITY_CONTRACT = 'source-fidelity/1.0';
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
+
+export const SOURCE_FIDELITY_CONTRACT = THESIS_POLICY.sourceFidelityContract;
 
 const text = value => typeof value === 'string' && value.trim().length > 0;
 const list = value => Array.isArray(value) ? value : [];

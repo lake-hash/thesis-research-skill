@@ -1,4 +1,6 @@
-export const FINAL_PUBLIC_REVIEW_SCHEMA='final-public/1.3';
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
+
+export const FINAL_PUBLIC_REVIEW_SCHEMA=THESIS_POLICY.finalPublicContract;
 export {
  STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT,judgmentAxes,openingFamilies,openingPlanIssues,
  professionalOpeningIssues,stanceOpeningIssues,openingChainIssues,openingSkeleton,
@@ -46,7 +48,8 @@ export const processLanguagePatterns=[
 
 export const portfolioOperationPatterns=[
  /\b(?:small|larger|major|core|largest|second-largest|third-largest|existing) (?:position|holding)s?\b/i,
- /\b(?:position|holding)s? (?:size|weight|was|were|remains?|remained|is|are|grew|increased|decreased)\b/i,
+ /\b(?:holding)s? (?:size|weight|was|were|remains?|remained|is|are|grew|increased|decreased)\b/i,
+ /(?<!competitive )(?<!market )\bposition(?:s)? (?:size|weight|was|were|remains?|remained|is|are|grew|increased|decreased)\b/i,
  /\bportfolio (?:weight|allocation|concentration)\b/i,
  /\b(?:planned|target) \d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?% (?:portfolio )?allocation\b/i,
  /\busing margin\b/i,

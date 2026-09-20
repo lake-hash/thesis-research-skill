@@ -2,11 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {validateCard} from './export-thesis-cards.mjs';
+import {temporalFeedDiversityReview} from '../../thesis-backfill/scripts/stance-opening-contract.mjs';
 
 const obj=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const text=value=>typeof value==='string'&&value.trim().length>0;
 const need=(condition,message)=>{if(!condition)throw Error(message);};
 const key=card=>JSON.stringify([card.author.id,card.thesisId]);
+const timestamp=card=>Number.isFinite(card?.createdAtMs)?card.createdAtMs:NaN;
+const compareHistory=(a,b)=>timestamp(a.card)-timestamp(b.card)||String(a.eventId).localeCompare(String(b.eventId));
+const compareDescending=(a,b)=>compareHistory(b,a);
 
 function rows(cards,manifest,route){
   need(Array.isArray(cards)&&obj(manifest)&&Array.isArray(manifest.items),route+' cards and manifest are required');
@@ -47,7 +51,60 @@ export function projectThesisFeed(bundle){
     return publicGroup;
   });
   projected.sort((a,b)=>(b.current?.createdAtMs||b.timeline[0]?.createdAtMs||0)-(a.current?.createdAtMs||a.timeline[0]?.createdAtMs||0)||a.authorId.localeCompare(b.authorId)||a.thesisId-b.thesisId);
-  return {schemaVersion:'thesis-feed-projection/1.0',groups:projected};
+  const feedItems=history.map(({card,item})=>({
+    eventId:item.eventId,
+    authorId:card.author.id,
+    thesisId:card.thesisId,
+    createdAtMs:card.createdAtMs,
+    card
+  })).sort(compareDescending);
+  const temporalDiversity=temporalFeedDiversityReview(feedItems.map(item=>item.card.body));
+  need(temporalDiversity.errors.length===0,'Temporal Feed opening diversity failed: '+temporalDiversity.errors.join('; '));
+  return {schemaVersion:'thesis-feed-projection/1.1',groups:projected,feedItems,temporalDiversity};
+}
+
+function selectedHistoryRows(projection,selection){
+  need(obj(projection)&&projection.schemaVersion==='thesis-feed-projection/1.1','Temporal Feed projection 1.1 is required');
+  const items=Array.isArray(projection.feedItems)?projection.feedItems:[];
+  need(items.length>0,'Temporal Feed projection has no historical expressions');
+  if(text(selection?.eventId)){
+    const matches=items.filter(item=>item.eventId===selection.eventId);
+    need(matches.length===1,'Selected Feed event is missing or duplicated: '+selection.eventId);
+    return matches;
+  }
+  need(text(selection?.authorId)&&Number.isSafeInteger(selection?.thesisId),'Temporal Feed selection needs authorId and thesisId when eventId is omitted');
+  const groupItems=items.filter(item=>item.authorId===selection.authorId&&item.thesisId===selection.thesisId);
+  need(groupItems.length>0,'Selected Feed thesis has no historical expressions');
+  need(selection.at!==undefined&&selection.at!==null,'Temporal Feed selection needs an eventId or cutoff at');
+  const cutoff=typeof selection.at==='number'?selection.at:Date.parse(selection.at);
+  need(Number.isFinite(cutoff),'Temporal Feed cutoff at must be an ISO date or Unix milliseconds');
+  const eligible=groupItems.filter(item=>item.createdAtMs<=cutoff).sort(compareDescending);
+  need(eligible.length>0,'Temporal Feed cutoff has no expression at or before the requested date');
+  return [eligible[0]];
+}
+
+/**
+ * Build the detail projection for one dated Feed expression.
+ * The selected expression is the current content at the top; only strictly
+ * earlier expressions remain in Timeline. The latest current snapshot is not
+ * used here because it may contain later synthesis than the selected date.
+ */
+export function projectThesisAt(projection,selection={}){
+  const [selected]=selectedHistoryRows(projection,selection);
+  const history=projection.feedItems
+    .filter(item=>item.authorId===selected.authorId&&item.thesisId===selected.thesisId)
+    .sort(compareHistory);
+  const selectedIndex=history.findIndex(item=>item.eventId===selected.eventId);
+  need(selectedIndex>=0,'Selected Feed event is not part of its thesis history');
+  return {
+    schemaVersion:'thesis-feed-projection/1.1',
+    authorId:selected.authorId,
+    thesisId:selected.thesisId,
+    selectedEventId:selected.eventId,
+    selectedAt:selected.createdAtMs,
+    current:selected.card,
+    timeline:history.slice(0,selectedIndex).reverse().map(item=>item.card)
+  };
 }
 
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){

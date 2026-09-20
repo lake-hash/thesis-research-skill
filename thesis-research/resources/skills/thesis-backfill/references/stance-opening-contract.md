@@ -1,4 +1,4 @@
-# Stance Opening Contract 1.3
+# Stance Opening Contract 1.4
 
 Use this contract for every new or rewritten public main card and Timeline
 update. It is a shared generation, update and final-review rule. It adds no
@@ -10,7 +10,7 @@ The writer first returns an internal `opening_plan`:
 
 ```json
 {
-  "version": "source-backed-opening/1.3",
+  "version": "source-backed-opening/1.4",
   "subject": "Zoetis",
   "stance": "bearish",
   "judgment_axis": "capital_allocation",
@@ -44,12 +44,19 @@ first sentence. Later sentences may add evidence, conditions or risk, but they
 must not be needed to identify the main causal relationship. Do not compress
 prose into one `because` template merely to pass the gate.
 
-Do not copy the enum words Bullish, Bearish or Neutral into public prose. The tag
-already carries that metadata. Use natural states such as `has upside`, `looks
-vulnerable`, `is better positioned`, `is execution-dependent` or `is balanced`,
-as supported by the source. A factual statement such as `pricing rose 125%` or
-`the advertising franchise remained intact` is evidence-first and fails unless a
-directional investment clause precedes it.
+Prefer a natural source-owned judgment axis. Bullish, Bearish or Neutral may be
+used when the tracked author explicitly used the same word in that expression,
+the opening plan records `source_explicit_direction: true`, and the same sentence
+states a concrete mechanism. Never copy the word from ticker metadata or use it
+as a standalone label. Lead with the source-owned judgment axis and its
+investment consequence, such as `the earnings outlook is improving`, `valuation
+is stretched`, `competitive pressure is increasing` or `risk/reward is balanced`.
+Generic company-first templates such as `X has upside`, `X could benefit`, `X
+looks stronger`, `X is well positioned`, `X is execution-dependent` and `X offers
+an opportunity` fail even when the following clause contains a real mechanism.
+A factual statement such as `pricing rose 125%` or `the advertising franchise
+remained intact` is evidence-first and fails unless a directional investment
+clause precedes it.
 
 The opening must stand on its own: name any counterparty, product or event whose
 identity is needed to understand the mechanism. An unnamed "the partnership"
@@ -66,7 +73,7 @@ maintaining a fixed number of sentences or paragraphs.
 
 ## Timeline Historical Snapshot
 
-A Timeline row uses `source-backed-timeline-opening/1.2` and follows the same reader-facing order, but its per-ticker direction
+A Timeline row uses `source-backed-timeline-opening/1.3` and follows the same reader-facing order, but its per-ticker direction
 is independently parsed from that dated source and never inherited from the
 current card. Its first sentence states the
 source-date investment implication and decisive mechanism using that event's
@@ -91,9 +98,11 @@ specific source-backed mechanism. Reject a bare or circular attractiveness label
 compelling. Control attractive/unattractive through the same corpus-frequency
 review as every other opening family rather than banning it.
 
-Direct `Bullish on`, `Bearish on` and `Neutral on` language is public metadata
-leakage and fails even when the source uses that word. Preserve the source quote
-privately and rewrite the visible sentence as a natural source-faithful state.
+Direct `Bullish on`, `Bearish on` and `Neutral on` language is valid only with
+exact same-expression support and an immediate mechanism. Use opening family
+`direct_source_label`, retain the supporting quote and set
+`source_explicit_direction: true`. Without those fields it remains metadata
+leakage and fails.
 
 ## Corpus Review
 
@@ -101,6 +110,21 @@ Adjacent cards may not use the same normalized opening family. More than two use
 of one family in a rolling ten-card window, or more than 12% of the complete feed,
 requires an explicit corpus-level editorial decision. The check creates a review
 queue; it must not automatically rotate synonyms or rewrite source-faithful prose.
+
+## Timeline Sequence Diversity
+
+`source-backed-timeline-opening/1.3` governs each row; sequence review governs the
+rows together. A valid row can still make the Timeline read like generated copy
+when neighboring rows repeat `Company remains favored because ...`.
+
+- Reject adjacent rows with the same normalized opening family.
+- Reject three consecutive subject-first causal rows, even when their adjectives
+  or connectors differ.
+- Condition-first, driver-first and consequence-first forms are valid when they
+  preserve the exact dated judgment and reason.
+- Never rotate synonyms automatically. If the underlying increment is repeated,
+  coalesce or keep it source-only. If the increment is distinct, redraft from its
+  own mechanism.
 
 ## Performance
 

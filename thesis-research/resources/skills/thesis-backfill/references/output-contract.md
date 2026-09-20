@@ -1,10 +1,21 @@
 # Local Review Packet, Schema 1.0
 
+This schema implements the shared
+[Thesis core contract](../../references/thesis-core-contract.md). Policy versions
+and limits come from `skills/references/thesis-policy.mjs`.
+
 This is an auditable interchange format, not the prototype's `app_en` schema and
 not a promise of a fully automated collector. Assemble it programmatically from
 checkpointed source/candidate files. Do not ask a model to reproduce the entire
 archive in one output. Keep full source text private; public cards use checked
 short excerpts or paraphrases and original links.
+
+For new runs, source review first produces `reviewed-thesis-facts/1.0`. That
+ledger owns admission, grouping, events, evidence, tickers, directions and source
+dispositions, and explicitly contains no public prose. Validate it with
+`thesis-pipeline.mjs facts` before language generation. `packet.json` is assembled
+from the approved facts plus generated prose, media decisions and review maps;
+language generation cannot change the approved semantic fields.
 
 `packet.json` has these required arrays: `authors`, `coverage`, `sources`,
 `decisions`, `records`, `pending`. It also has `schema_version: "1.0"`,
@@ -98,7 +109,7 @@ Each reviewed or held record:
     "evidence": [{"source_id": "source-1", "quote": "Exact source text", "explanation": "Why this supports the direction"}]
   }],
   "opening_plan": {
-    "version": "source-backed-opening/1.3",
+    "version": "source-backed-opening/1.4",
     "subject": "Acme",
     "stance": "bullish",
     "judgment_axis": "demand",
@@ -109,6 +120,23 @@ Each reviewed or held record:
     "stance_realizations": [{"ticker": "ACME", "stance": "bullish", "text_span": "Acme is strengthening"}],
     "mechanism_location": "same_sentence",
     "opening_family": "company_state"
+  },
+  "source_judgment": {
+    "version": "source-investment-landing/1.0",
+    "axis": "demand",
+    "landing": "Recurring demand supports a stronger earnings outlook.",
+    "explicitness": "explicit",
+    "evidence": [{"source_id":"source-1","quote":"Exact source text","explanation":"Why this supports the landing"}]
+  },
+  "history_search": {
+    "version": "author-object-history/1.0",
+    "aliases": ["ACME", "Acme Corp"],
+    "scope_source_count": 100,
+    "matched_source_ids": ["source-1"],
+    "public_event_ids": ["event-1"],
+    "source_only_source_ids": [],
+    "held_source_ids": [],
+    "no_timeline_reason": "Only one source contained a qualifying company judgment and why."
   },
   "description": "The latest source-supported assessment and its reason, written as continuous prose.",
   "assessment_as_of": "2026-09-09",
@@ -152,8 +180,9 @@ the product direction `bullish`, `bearish` or `none`; see the
 [ThesisCard contract](../../thesis-review-publish/references/thesis-card-contract.md).
 The current Feed rendering agreement shows a rising trend icon for `bullish`, a
 falling trend icon for `bearish`, and no direction icon for `none`. It does not
-render the enum words Bullish, Bearish or Neutral. These are Feed presentation
-requirements, not permission to change source-backed prose or duplicate logos.
+render enum words merely because they exist in ticker metadata. The visible body
+may retain Bullish/Bearish/Neutral when the source explicitly uses the same word,
+the mechanism is present and review records `source_explicit_direction: true`.
 
 The `title` field is forbidden on thesis and event records, including empty,
 null, optional and internal compatibility values. Older packets with titles
@@ -235,6 +264,12 @@ media_bindings, revision_of_event_id?}`.
   is derived from included bindings; it is not handwritten separately.
   Use `context_image_role: explanatory_context` for a relevant quoted/reply image
   that helps explain context without being adopted as the author's evidence.
+- New public expressions with attachments require `media_review` version
+  `expression-media/1.0`, bound to the exact `source_id|attachment_id` set with
+  reviewer/date, counts, decision and reason. Available bindings carry an
+  image-specific `content_summary`; omissions also carry a controlled
+  `omit_category`. Two or more distinct public attachments with zero includes
+  require a packet-level `all-zero-public-media-audit/1.0` receipt.
 
 An included binding from `context_source_ids` must carry a specific reason.
 When the author explicitly adopts that context, retain a `support` span with
@@ -328,7 +363,7 @@ New runs keep `schema_version: "1.0"` for interchange compatibility and declare:
   "public_scope": "source_grounded_company_analysis/1.0",
   "timeline_preview_words": 40,
   "prose_max_chars": 500,
-  "opening_contract": "source-backed-opening/1.3",
+  "opening_contract": "source-backed-opening/1.4",
   "ticker_stance_contract": "per-expression-ticker-stance/1.0",
   "source_fidelity_contract": "source-fidelity/1.0",
   "review_contract": "source-first/1.1"
@@ -340,10 +375,12 @@ Active approved records add:
 - `object_type`: `company`, `theme`, `asset`, `basket` or `macro`.
 - `ticker_stances` and `stance_sentence` as defined above. Every ticker direction
   must be supported by exact evidence from the expression's source set.
-- `opening_plan` under `source-backed-opening/1.3`. It records the subject,
+- `opening_plan` under `source-backed-opening/1.4`. It records the subject,
   judgment axis, directional state, mechanism, exact `stance_clause`, exact
   `mechanism_clause`, per-ticker `stance_realizations`, mechanism location and
-  opening family. Public prose never repeats Bullish/Bearish/Neutral metadata.
+  opening family and optional boolean `source_explicit_direction`. Public prose
+  uses Bullish/Bearish/Neutral only with exact same-expression support; metadata
+  alone never supplies the word.
   The plan is supported by the selected primary expression. Final review also
   records `relationship_complete` and `continuation_advances` after reading the
   rendered stance and body as one passage.
@@ -368,7 +405,7 @@ Active approved records add:
   not the historical event-type label. Only analysis/brief_thesis candidates with
   evidence for every core claim are eligible. Keep ineligible updates in history.
 - Visible Timeline review rows add `timeline_opening_contract`, set to
-  `source-backed-timeline-opening/1.2`, plus exact `stance_clause`, exact
+  `source-backed-timeline-opening/1.3`, plus exact `stance_clause`, exact
   `mechanism_clause`, per-ticker `stance_realizations`,
   `metadata_hidden_direction_clear`, `direction_visible_immediately`,
   `mechanism_visible_immediately`, `relationship_complete` and

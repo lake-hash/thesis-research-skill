@@ -5,7 +5,7 @@ deployment. Require actual draft records and source/match decisions. Do not trea
 the structural validator as a semantic evaluator.
 
 Run the deterministic [guard tests](../scripts/test-validator.mjs) with
-`node --test <skill-root>/scripts/test-validator.mjs`.
+`node <skill-root>/scripts/thesis-pipeline.mjs test`.
 The [prototype sample check](../scripts/check-prototype-sample.mjs) imports the
 available archived AEHR sample into a temporary held compatibility packet. It is
 local-only, performs no new network retrieval, and does not approve or publish
@@ -28,8 +28,11 @@ installed skill or repository source.
 | A short reply omits the ticker but its verified parent names the company | May use the parent to resolve identity, but the final update must store its own verified ticker and direction |
 | One post compares several named securities and the prose discusses each one | One expression may carry every verified ticker; mention every object in prose and tag each one instead of keeping only the first |
 | A source contains many tickers but the generated company paragraph uses only one section | Bind only the ticker(s) used by that paragraph; the other sections remain separate context or theses |
+| A resolved NQ post says stable high yields can be absorbed through earnings but bond volatility creates short-term risk around FOMC | Keep the balanced NQ thesis; FOMC/event-watch language does not erase the complete risk/reward judgment |
 | The current post has no image but quotes a chart that explains the accepted why | Include the exact quoted-context attachment with provenance and a material-use reason |
 | The quoted image is merely adjacent, repetitive or unrelated to the accepted prose | Omit it with a specific reason; quoted media does not follow automatically |
+| Several image-bearing public expressions all receive the same generic omit reason | Fail media review; require image-specific summaries/categories and an exact all-zero public-media audit |
+| An attachment is marked `include` in the packet but disappears from presentation or final review | Fail delivery; included media and retrieval gaps are part of the expression hash |
 | A founder praises a crypto company's business without token economics | No invented token-price thesis |
 | A setup is closed before its target is later reached | Retain exit; later target is not an earned return or reopened trade |
 | A new trading episode follows a stop-out in the same ticker | New episode inside the company history; retain the failed episode and account scope |
@@ -39,16 +42,19 @@ installed skill or repository source.
 | A long entry has blank lines but its first paragraph only names the topic | Revise: opening must summarize the judgment and material condition; formatting alone is insufficient |
 | `Zoetis looks unattractive` | Reject the bare label; require an immediate source-backed mechanism |
 | `Zoetis looks unattractive as poor capital allocation compounds a deteriorating outlook` | Valid when source-backed and not overused across the feed |
+| The source says `I am still bullish on gold` and explains rising policy uncertainty | `Bullish` may remain in prose with the same-expression quote, mechanism and `source_explicit_direction: true` |
+| Generated prose says `Bullish on gold` but the source only implies a positive view | Fail source-explicit-direction review; metadata cannot supply the word |
 | `Amazon looks vulnerable because the case for a higher valuation is limited` | Reject circular case language; state the operating or valuation mechanism directly |
-| `Sandisk is well positioned as the NAND outlook is supported` | Reject passive support language; name the demand, supply or pricing driver |
-| `Nebius is well positioned as the partnership could expand distribution. Palantir named Nebius its preferred partner.` | Revise: sentence one must name Palantir and the partnership's investment mechanism; sentence two cannot repair an incomplete opening |
+| `Sandisk is well positioned as the NAND outlook is supported` | Reject the generic company-first template and passive support language; state the demand, supply or pricing outlook directly |
+| `Nebius is well positioned as the partnership could expand distribution. Palantir named Nebius its preferred partner.` | Reject the generic company-first template; sentence one must name Palantir and state the resulting distribution or earnings consequence |
 | `Robinhood is strengthening as new products diversify revenue. New products and services could support growth.` | Revise: identify the products in sentence one and replace the second-sentence echo with distinct evidence, condition or risk |
-| `Apple and Snap could benefit if Apple bought Snap's Specs business... Neither company has announced a deal.` | Valid when source-backed: sentence one contains the parties, transaction and mechanism; the follow-up adds transaction-stage risk |
-| One family such as `well positioned` dominates the catalog | Create corpus editorial review; do not auto-rotate synonyms or add unsupported mechanisms |
+| `Apple and Snap could benefit if Apple bought Snap's Specs business... Neither company has announced a deal.` | Reject the generic `could benefit` landing; state the transaction's specific valuation, earnings or risk/reward consequence while preserving that no deal has been announced |
+| A professional opening family dominates the catalog | Create corpus editorial review; do not auto-rotate synonyms or add unsupported mechanisms |
 | Released README says `local candidate`, or Signals note says eight while rendering zero | Fail release consistency |
 | A short complete view is padded to satisfy a two-paragraph template | Keep one paragraph; no minimum length or paragraph quota |
 | An update says "the absence of a guidance increase is retained" | State that guidance did not rise and explain why it matters; move process narration out of reader copy |
 | Timeline displays "Additional evidence" or an event headline | Fail presentation review: use date, body preview, ticker logos and source; types remain internal |
+| Three Gold updates read `Gold looked... because`, `Gold should remain... because`, `Gold remains... because` | Fail Timeline sequence diversity; preserve distinct risks but vary the logic naturally instead of rotating synonyms |
 | A cleaner trade summary omits that the sale was only recommended | Fail fidelity review; advice is not execution |
 | An older preview uses today's closed-trade conclusion | Fail chronology review; derive the preview only from the frozen historical description |
 | A Signal repeats its summary instead of relating it to the thesis | Revise interpretation to explain specific support, challenge or qualification |
@@ -116,6 +122,10 @@ retrieval/coverage limitations.
 - Every final card and Timeline row is re-reviewed after grouping/overrides and
   bound to the exact presentation hash. A valid earlier review cannot approve a
   changed final projection.
+- A complete triage candidate cannot disappear during drafting. `candidate-gate`
+  fails unless it becomes public, remains pending, or receives an evidence-bound
+  hard exclusion; `event_watch` is never an allowed exclusion basis. The standard
+  `validate-backfill` entrypoint runs this gate before packet validation.
 
 These are deterministic invariant tests, not an independent semantic extraction
 benchmark. Do not label imported prototype copy as a fresh first-pass generation.

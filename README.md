@@ -47,6 +47,5 @@ resources are included.
 
 ```bash
 node scripts/validate-bundle.mjs
-node --test thesis-research/resources/skills/thesis-backfill/scripts/test-*.mjs \
-  thesis-research/resources/skills/thesis-review-publish/scripts/test-*.mjs
+node thesis-research/resources/skills/thesis-backfill/scripts/thesis-pipeline.mjs test
 ```

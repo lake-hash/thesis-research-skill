@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {validateGenerationContract,sameValue} from './generation-contract.mjs';
-import {validateMediaSource,validateMediaEvent,validateSourceAttachments} from './media-contract.mjs';
+import {validateMediaSource,validateMediaEvent,validatePacketMediaAudit,validateSourceAttachments} from './media-contract.mjs';
 import {validateDocumentEvidence} from './document-evidence-contract.mjs';
 import {validateProseLimit} from './prose-limit.mjs';
 import {validateRunReview,validateObjectGrouping} from './run-review-contract.mjs';
 import {publicTickersFromBindings,tickerStanceIssues} from './ticker-stance-contract.mjs';
 import {sourceFidelityIssues} from './source-fidelity-contract.mjs';
+import {ALL_GENERATION_VERSIONS,THESIS_POLICY} from '../../references/thesis-policy.mjs';
 
 const hash=text=>crypto.createHash('sha256').update(text).digest('hex');
 const filled=v=>typeof v==='string'&&v.trim().length>0;
@@ -23,7 +24,7 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
  const errors=[],warnings=[];
  const check=(condition,message)=>{if(!condition)errors.push(message);};
  if(!packet||typeof packet!=='object')return {ok:false,errors:['Packet must be an object'],warnings};
- const strictGeneration=requireGenerationContract||['3.0','3.1','3.2'].includes(packet.generation_policy?.version)||['3.0','3.1','3.2'].includes(baseline?.generation_policy?.version);
+ const strictGeneration=requireGenerationContract||ALL_GENERATION_VERSIONS.includes(packet.generation_policy?.version)||ALL_GENERATION_VERSIONS.includes(baseline?.generation_policy?.version);
  const arrays={};
  for(const key of ['authors','coverage','sources','decisions','records','pending']){check(Array.isArray(packet[key]),key+' must be an array');const entries=Array.isArray(packet[key])?packet[key]:[];check(entries.every(v=>v&&typeof v==='object'&&!Array.isArray(v)),key+' contains a non-object entry');arrays[key]=entries.filter(v=>v&&typeof v==='object'&&!Array.isArray(v));}
  const {authors,coverage,sources,decisions,records,pending}=arrays;
@@ -129,7 +130,7 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
    if(action.kind==='close'&&action.basis==='reported_execution'){reportedClose=true;if(t.type==='setup')setupClosed=true;}
   }
   if(t.position_status==='closed_reported')check(reportedClose,label+' closed position lacks a reported close');
-  if(approved&&packet.generation_policy?.version==='3.2'&&t.type!=='context'){
+  if(approved&&packet.generation_policy?.version===THESIS_POLICY.generationVersion&&t.type!=='context'){
    const tickerSources=[...new Set((t.events||[]).flatMap(event=>[...(event.source_ids||[]),...(event.context_source_ids||[])]))];
    for(const issue of tickerStanceIssues({tickerStances:t.ticker_stances,tickers:publicTickersFromBindings(t.asset_bindings),sources:sourceMap,allowedSourceIds:tickerSources}))check(false,label+' '+issue);
   }
@@ -172,6 +173,7 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
  for(const d of decisions)if(d.disposition==='used')check(referenced.has(d.source_id),'Used source has no record or pending reference '+d.source_id);
  if(packet.completion?.review==='complete')check(pending.length===0&&records.every(t=>t.review?.status==='approved')&&!decisions.some(d=>d.disposition==='hold'),'Review cannot be complete with holds or unreviewed candidates');
  if(packet.completion?.review==='complete'&&decisions.some(d=>['context','no_judgment'].includes(d.disposition))){const o=packet.omission_review;check(filled(o?.reviewer)&&filled(o?.method)&&filled(o?.reason)&&Array.isArray(o?.source_ids)&&o.source_ids.length>0&&o.source_ids.every(id=>sourceMap.has(id)&&['context','no_judgment'].includes(dispositions.get(id)?.disposition)),'Complete review needs a recorded omission sample');}
+ validatePacketMediaAudit({...packet,records},sourceMap,check,{required:strictGeneration});
  if(strictGeneration)validateGenerationContract(packet,{baseline,check,warnings,requireLatest:requireGenerationContract});
  if(strictGeneration)validateObjectGrouping(records,packet.object_overlap_reviews,sourceMap,check);
  if(requireRunReview||packet.generation_policy?.review_contract||baseline?.generation_policy?.review_contract)validateRunReview(packet,check);

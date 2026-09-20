@@ -88,7 +88,7 @@ node <skill-root>/scripts/plan-fast-extraction.mjs packet.json triage-plan.json
 node --test <skill-root>/scripts/test-fast-extraction.mjs
 ```
 
-Use [../prompts/triage.md](../prompts/triage.md) for each planned batch. The
+Compile `node scripts/thesis-pipeline.mjs prompt triage` for each planned batch. The
 planner removes exact canonical-event copies, honors revision/policy cache keys,
 isolates empty extraction gaps and packs bounded batches. It makes no semantic
 content decision.

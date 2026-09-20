@@ -1,5 +1,9 @@
 # ThesisCard export contract 1.1
 
+This delivery schema implements the shared
+[Thesis core contract](../../references/thesis-core-contract.md). It does not
+redefine content admission or source-fidelity rules.
+
 Preparation input is now `thesis-export-input/1.1`, with required `sourceCoverage`
 integrity metadata generated from the validated claim/history evidence. Input 1.0
 remains explicit legacy compatibility, not current evidence certification. Follow
@@ -198,6 +202,18 @@ For the current Feed treatment:
   `createdAtMs`, and suppress only the history event identified as the current
   snapshot's event in the manifests.
 
+For a chronological Feed, the projection additionally returns `feedItems`, one
+entry per immutable history event, each carrying `eventId`, the scoped thesis
+identity, its own `createdAtMs`, and the validated ThesisCard. Render these items
+directly in the main Feed; do not replace them with one latest card per thesis.
+When a user opens an item, resolve its detail with the temporal projection
+contract (`thesis-feed-projection/1.1`): the selected event is the top-level
+current content, and Timeline contains only strictly earlier events for the same
+`(author.id, thesisId)`, newest first. The selected event must not appear again
+in Timeline, and future events or the latest current snapshot must not leak into
+that historical detail. `projectThesisAt` supports selection by `eventId` or by
+thesis plus a cutoff date, choosing the latest event at or before that cutoff.
+
 Validate the prepared bundle before Feed handoff:
 
 ```bash
@@ -208,6 +224,12 @@ node --test skills/thesis-review-publish/scripts/test-feed-projection.mjs
 This projection validates data ownership and grouping. It does not claim that a
 particular frontend rendered the intended controls; the Feed repository should
 cover those components with its own UI tests.
+
+Projection also runs `temporal-feed-opening-diversity/1.0` against the actual
+chronological `feedItems` order. It fails delivery when adjacent rows reuse the
+same surface family, when one family appears more than twice inside six rows, or
+when a repeated family dominates the corpus. This check spans Thesis identities;
+per-record Timeline review alone is not sufficient.
 
 `allocatePreviewIds` provides **local-preview-only** persistent numeric IDs. It
 retains removed allocations and cannot modify a production map. The manifest

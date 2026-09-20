@@ -1,6 +1,7 @@
 import ThesisLinks from './source-links.cjs';
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
 
-export const PROSE_MAX_CHARS = 500;
+export const PROSE_MAX_CHARS = THESIS_POLICY.proseMaxChars;
 const entries = value => Array.isArray(value) ? value.filter(v => v && typeof v === 'object') : [];
 
 export function proseLength(value) {

@@ -1,5 +1,6 @@
 import {validateCardSources} from './card-source-contract.mjs';
 import {validateTimelineReview} from './timeline-review-contract.mjs';
+import {ALL_GENERATION_VERSIONS,THESIS_POLICY} from '../../references/thesis-policy.mjs';
 import {openingChainIssues,STANCE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
 import {publicTickersFromBindings,tickerStanceIssues,TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
 import {SOURCE_FIDELITY_CONTRACT,sourceFidelityIssues,sourceFidelityClaimIssues} from './source-fidelity-contract.mjs';
@@ -20,9 +21,9 @@ export function sameValue(a,b){
 }
 export function validateGenerationContract(packet,{baseline,check,warnings,requireLatest=false}){
  const policy=packet.generation_policy;
- const currentScope=policy?.public_scope==='source_grounded_company_analysis/1.0';
- check(['3.0','3.1','3.2'].includes(policy?.version)&&policy.grouping==='author_company'&&policy.history==='append_only'&&policy.timeline_preview_words===40&&(policy.version==='3.2'?currentScope:policy.public_scope==='fundamental_company_only/1.0'),'Generation policy 3.2 with source_grounded_company_analysis/1.0 scope is required for new runs');
- if(requireLatest||baseline?.generation_policy?.version==='3.2')check(policy?.version==='3.2','Generation policy 3.2 is required for new runs and cannot be downgraded');
+ const currentScope=policy?.public_scope===THESIS_POLICY.publicScope;
+ check(ALL_GENERATION_VERSIONS.includes(policy?.version)&&policy.grouping===THESIS_POLICY.grouping&&policy.history===THESIS_POLICY.history&&policy.timeline_preview_words===THESIS_POLICY.timelinePreviewWords&&(policy.version===THESIS_POLICY.generationVersion?currentScope:policy.public_scope==='fundamental_company_only/1.0'),'Generation policy '+THESIS_POLICY.generationVersion+' with '+THESIS_POLICY.publicScope+' scope is required for new runs');
+ if(requireLatest||baseline?.generation_policy?.version===THESIS_POLICY.generationVersion)check(policy?.version===THESIS_POLICY.generationVersion,'Generation policy '+THESIS_POLICY.generationVersion+' is required for new runs and cannot be downgraded');
  if(requireLatest||baseline?.generation_policy?.opening_contract)check(policy?.opening_contract===STANCE_OPENING_CONTRACT,'Current generation requires opening_contract: '+STANCE_OPENING_CONTRACT);
  if(policy?.version==='3.2')check(policy?.ticker_stance_contract===TICKER_STANCE_CONTRACT,'Current generation requires ticker_stance_contract: '+TICKER_STANCE_CONTRACT);
  if(policy?.version==='3.2')check(policy?.source_fidelity_contract===SOURCE_FIDELITY_CONTRACT,'Current generation requires source_fidelity_contract: '+SOURCE_FIDELITY_CONTRACT);
@@ -39,6 +40,11 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
    for(const issue of openingChainIssues({stanceSentence:t.stance_sentence,body:t.description,subject:t.opening_plan?.subject,openingPlan:t.opening_plan,tickerStances:t.ticker_stances}))check(false,label+' '+issue);
    for(const issue of sourceFidelityIssues({prose:`${t.stance_sentence}\n${t.description}`,sources,allowedSourceIds:historySourceIds(t)}))check(false,label+' '+issue);
    for(const claim of list(t.card_claims))for(const issue of sourceFidelityClaimIssues(claim,sources))check(false,label+' '+issue);
+   const judgment=t.source_judgment;
+   check(judgment?.version==='source-investment-landing/1.0',label+' needs source-investment-landing/1.0');
+   check(judgment?.axis===t.opening_plan?.judgment_axis&&filled(judgment?.landing)&&['explicit','conditional'].includes(judgment?.explicitness),label+' needs an explicit source-owned investment landing and judgment axis');
+   check(list(judgment?.evidence).length>0,label+' investment landing needs exact source evidence');
+   for(const evidence of list(judgment?.evidence)){const source=sources.get(evidence?.source_id);check(!!source&&filled(evidence?.quote)&&source.text?.includes(evidence.quote)&&filled(evidence?.explanation),label+' investment landing has unsupported evidence');}
    }
    if(t.object_type==='company'){
     check(t.type==='thesis'||t.type==='context',label+' company trades belong inside a company thesis, not a standalone setup');
@@ -86,6 +92,14 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
    const field=selected?.date_basis==='spoken'?'spoken_at':'published_at';
    check(!!selected?.at&&source?.[field]===selected.at,label+' primary date must match its selected original source');
    if(selected?.at)check(eligible.every(id=>!lookup.get(id)?.at||time(lookup.get(id).at)<=time(selected.at)),label+' primary event is not the latest eligible statement');
+   const search=t.history_search,matched=list(search?.matched_source_ids),eventIds=list(search?.public_event_ids),sourceOnly=list(search?.source_only_source_ids),held=list(search?.held_source_ids);
+   check(search?.version==='author-object-history/1.0'&&list(search?.aliases).some(filled)&&Number.isInteger(search?.scope_source_count)&&search.scope_source_count>0,label+' needs an author-object history search receipt');
+   check([...matched,...sourceOnly,...held].every(id=>sources.has(id)),label+' history search references unknown sources');
+   check(eventIds.every(id=>lookup.has(id)),label+' history search references unknown events');
+   const accounted=new Set([...history.flatMap(event=>list(event.source_ids)),...sourceOnly,...held]);
+   check(matched.every(id=>accounted.has(id)),label+' history search leaves matched sources unaccounted');
+   const visibleUpdates=list(t.timeline_review).filter(row=>row?.disposition==='update'&&row.event_id!==t.primary_event_id);
+   if(!visibleUpdates.length)check(filled(search?.no_timeline_reason),label+' needs a source-based no_timeline_reason');
    for(const m of members){
     for(const b of [...list(m.asset_bindings),...list(m.events).flatMap(e=>list(e.asset_bindings))].filter(b=>b&&['primary','vehicle'].includes(b.role))){
      const key=imageKey(b),existing=neededImages.get(key);
@@ -93,8 +107,13 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
      if(!existing)neededImages.set(key,b);
     }
     for(const s of list(m.signals))neededPeople.add(s.author_id);
-   }
-  }
+ }
+}
+ const publicRecords=records.filter(t=>t?.review?.status==='approved'&&!t.superseded_by&&t.type!=='context');
+ if(publicRecords.length>1&&publicRecords.every(t=>!list(t.timeline_review).some(row=>row?.disposition==='update'&&row.event_id!==t.primary_event_id))){
+  const audit=packet.history_search_audit;
+  check(audit?.version==='all-zero-timeline-audit/1.0'&&audit?.decision==='reviewed'&&filled(audit?.reviewer)&&filled(audit?.reason)&&sameValue([...list(audit?.record_ids)].sort(),publicRecords.map(t=>t.id).sort()),'Multiple public records with zero Timeline rows require all-zero-timeline-audit/1.0');
+ }
  }
  check(Array.isArray(packet.images),'Generation requires an image lookup catalog');
  const images=new Map();

@@ -9,6 +9,11 @@ This is the portable entrypoint for the complete Thesis workflow. It bundles
 the backfill, update, review/publish, and operations modes plus their shared
 contracts, prompts, validators, and export scripts.
 
+Backfill uses the current six-stage flow: Archive, Triage, Facts, Media,
+Language, and Delivery. The bundled machine policy, packed-stage planner,
+candidate-closure checks, deterministic presentation, and final-public gates
+are part of the package; do not replace them with ad hoc prompt-only steps.
+
 ## Choose A Mode
 
 - **Backfill:** recover an author's historical public investment views. Read
@@ -22,8 +27,10 @@ contracts, prompts, validators, and export scripts.
 - **Operations:** inspect coverage, queues, automation health, and recovery
   options. Read [Operations mode](resources/skills/thesis-ops/SKILL.md).
 
-For work spanning modes, also read the
-[shared operation contract](resources/skills/references/thesis-operation-contract.md).
+For work spanning modes, read the
+[shared core contract](resources/skills/references/thesis-core-contract.md), the
+[machine policy](resources/skills/references/thesis-policy.mjs), and the
+[operation contract](resources/skills/references/thesis-operation-contract.md).
 
 ## Public Product Contract
 

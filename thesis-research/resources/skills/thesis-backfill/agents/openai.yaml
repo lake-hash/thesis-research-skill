@@ -1,4 +1,4 @@
 interface:
   display_name: "Thesis Backfill"
   short_description: "Recover sourced author theses, tickers and updates"
-  default_prompt: "Use $thesis-backfill for the person I provide: follow generation 3.2 and source-backed-opening/1.3, require metadata-independent stance-first prose with exact stance/mechanism clauses and per-ticker realization spans, require following prose to advance rather than paraphrase, keep mixed views private, and run the fail-closed final projection and release-consistency gates."
+  default_prompt: "Use $thesis-backfill for the person I provide. Follow the six-stage archive, triage, reviewed-facts, media, language and delivery pipeline; compile the stage prompts and run the fail-closed gates before delivery."

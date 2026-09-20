@@ -1,5 +1,7 @@
-export const TICKER_STANCE_CONTRACT='per-expression-ticker-stance/1.0';
-export const TICKER_STANCES=new Set(['bullish','bearish','none']);
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
+
+export const TICKER_STANCE_CONTRACT=THESIS_POLICY.tickerStanceContract;
+export const TICKER_STANCES=new Set(THESIS_POLICY.feedDirections);
 
 const list=value=>Array.isArray(value)?value:[];
 const text=value=>typeof value==='string'&&value.trim().length>0;

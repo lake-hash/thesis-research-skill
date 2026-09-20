@@ -1,5 +1,9 @@
 # Current-Run Review And Batch Gates
 
+This file expands the review section of the shared
+[Thesis core contract](../../references/thesis-core-contract.md). Version values
+come from `skills/references/thesis-policy.mjs`.
+
 Apply this contract to every new backfill or changed candidate before preparing
 product output. It supplements generation 3.2 with
 `generation_policy.review_contract: source-first/1.1` and
@@ -50,7 +54,7 @@ For every approved active record, store `source_first_review`:
     "opening_conclusion": "The directional investment conclusion",
     "opening_reason": "The decisive reason visible in the opening chain",
     "opening": {
-      "contract": "source-backed-opening/1.3",
+      "contract": "source-backed-opening/1.4",
       "opening_family": "company_state",
       "judgment_axis": "capital_allocation",
       "stance_clause": "Acme is strengthening",
@@ -82,7 +86,7 @@ For every approved active record, store `source_first_review`:
     "what_evidence": [{"source_id": "original ID", "quote": "Exact passage", "explanation": "Why it supports what"}],
     "why_evidence": [{"source_id": "original ID", "quote": "Exact passage", "explanation": "Why it supports why"}],
     "ticker_stances": [{"ticker": "ACME", "stance": "bullish"}],
-    "timeline_opening_contract": "source-backed-timeline-opening/1.2",
+    "timeline_opening_contract": "source-backed-timeline-opening/1.3",
     "stance_clause": "Acme is strengthening",
     "mechanism_clause": "because demand is expanding",
     "stance_realizations": [{"ticker": "ACME", "stance": "bullish", "text_span": "Acme is strengthening"}],
@@ -164,10 +168,33 @@ to their current card. Adding or changing a candidate returns to review.
 ## Required Commands And Output Checks
 
 ```bash
-node <skill-root>/scripts/validate-packet.mjs packet.json --require-history-coverage --require-generation-contract --require-prose-limit --require-run-review
+node <skill-root>/scripts/thesis-pipeline.mjs validate-backfill packet.json --triage triage.json --candidate-review candidate-review.json
 node <skill-root>/scripts/build-presentation.mjs packet.json presentation.json
 node <skill-root>/scripts/final-public-projection.mjs packet.json presentation.json final-review.json
 node <skill-root>/scripts/validate-batch.mjs batch.json
+```
+
+`candidate-review.json` uses `triage-candidate-accounting/1.0`, binds to the
+triage digest, names the reviewer and review time, and records only complete
+triage candidates that did not survive as public expressions. Each exclusion
+needs an allowed hard-failure basis, exact source evidence and a concrete reason.
+Duplicate/repeat exclusions also identify the strictly earlier public event.
+Event-watch, macro and volatility labels are deliberately not allowed bases.
+
+```json
+{
+  "version": "triage-candidate-accounting/1.0",
+  "triage_sha256": "digest from the supplied triage artifact",
+  "reviewer": "source-first reviewer",
+  "reviewed_at": "ISO timestamp",
+  "decisions": [{
+    "source_id": "source ID",
+    "decision": "exclude",
+    "basis": "investment_landing_missing",
+    "reason": "Concrete admission failure after reading the original",
+    "evidence": [{"quote": "Exact original span", "explanation": "Why the hard failure applies"}]
+  }]
+}
 ```
 
 Use `--baseline previous.json` for packet validation and presentation on

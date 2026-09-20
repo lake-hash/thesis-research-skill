@@ -1,5 +1,15 @@
 const filled=v=>typeof v==='string'&&v.trim().length>0;
 const url=v=>{try{return new URL(v).protocol==='https:';}catch{return false;}};
+const list=v=>Array.isArray(v)?v:[];
+const sorted=v=>[...v].sort((a,b)=>String(a).localeCompare(String(b)));
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
+export const EXPRESSION_MEDIA_REVIEW='expression-media/1.0';
+export const ALL_ZERO_PUBLIC_MEDIA_AUDIT='all-zero-public-media-audit/1.0';
+export const MEDIA_OMIT_CATEGORIES=new Set([
+ 'decorative','duplicate','technical_only','position_only','unrelated',
+ 'low_legibility','privacy','context_not_material'
+]);
 
 export function validateSourceAttachments(source,check,{required=false}={}){
  const status=source.attachment_status,items=source.attachments;
@@ -57,6 +67,51 @@ export function validateEventSourceImages(event,record,sourceMap,check,{required
  if(event.visual_dependency==='required')check(included>0,label+' required visual context needs an included image');
  if(event.visual_dependency==='helpful')check(included>0||gaps>0,label+' helpful visual context needs an included image or explicit retrieval gap');
  if(event.visual_dependency==='none')check(included===0,label+' visual_dependency none cannot include images');
+
+ const publicExpression=list(record.timeline_review).find(review=>review?.event_id===event.id)?.disposition==='update';
+ const attachmentKeys=sorted([...expressionIds].flatMap(sourceId=>list(sourceMap.get(sourceId)?.attachments).map(attachment=>sourceId+'|'+attachment.id))
+  .concat(bindings.filter(binding=>binding?.disposition==='retrieval_gap').map(binding=>binding.source_id+'|'+binding.attachment_id)));
+ if(required&&publicExpression&&attachmentKeys.length){
+  const review=event.media_review,expectedDecision=included&&attachmentKeys.length>included?'mixed':included?'include':gaps?'retrieval_pending':'omit_all';
+  check(review?.version===EXPRESSION_MEDIA_REVIEW,label+' needs '+EXPRESSION_MEDIA_REVIEW+' for every public expression with source images');
+  check(filled(review?.reviewer)&&filled(review?.reviewed_at)&&Number.isFinite(Date.parse(review.reviewed_at)),label+' media review needs reviewer and reviewed_at');
+  check(filled(review?.reason),label+' media review needs a content-based reason');
+  check(Number.isInteger(review?.attachment_count)&&review.attachment_count===attachmentKeys.length,label+' media review attachment_count is stale');
+  check(Number.isInteger(review?.include_count)&&review.include_count===included,label+' media review include_count is stale');
+  check(review?.decision===expectedDecision,label+' media review decision does not match include/omit/retrieval outcomes');
+  check(same(sorted(list(review?.attachment_ids)),attachmentKeys),label+' media review is not bound to the exact attachment set');
+  for(const binding of bindings){
+   if(!attachmentKeys.includes(binding?.source_id+'|'+binding?.attachment_id))continue;
+   if(binding.disposition==='retrieval_gap')continue;
+   check(filled(binding.content_summary),label+' binding needs an image-specific content_summary for '+binding.source_id+'/'+binding.attachment_id);
+   check(filled(binding.reason),label+' binding needs an image-specific decision reason for '+binding.source_id+'/'+binding.attachment_id);
+   if(['omit','unrelated'].includes(binding.disposition))check(MEDIA_OMIT_CATEGORIES.has(binding.omit_category),label+' omitted image needs a specific omit_category for '+binding.source_id+'/'+binding.attachment_id);
+  }
+ }
+}
+
+export function validatePacketMediaAudit(packet,sourceMap,check,{required=false}={}){
+ if(!required)return;
+ const publicEvents=[];
+ for(const record of list(packet.records).filter(record=>record?.review?.status==='approved'&&!record.superseded_by)){
+  const updates=new Set(list(record.timeline_review).filter(review=>review?.disposition==='update').map(review=>review.event_id));
+  for(const event of list(record.events).filter(event=>updates.has(event.id))){
+   const expressionIds=[...list(event.source_ids),...list(event.context_source_ids)];
+   const attachmentIds=expressionIds.flatMap(sourceId=>list(sourceMap.get(sourceId)?.attachments).map(attachment=>sourceId+'|'+attachment.id));
+   const gapIds=list(event.media_bindings).filter(binding=>binding?.disposition==='retrieval_gap').map(binding=>binding.source_id+'|'+binding.attachment_id);
+   const ids=sorted(new Set([...attachmentIds,...gapIds]));
+   if(ids.length)publicEvents.push({event,attachmentIds:ids});
+  }
+ }
+ const attachmentIds=sorted(new Set(publicEvents.flatMap(row=>row.attachmentIds)));
+ const included=new Set(publicEvents.flatMap(row=>list(row.event.media_bindings).filter(binding=>binding?.disposition==='include').map(binding=>binding.source_id+'|'+binding.attachment_id)));
+ if(attachmentIds.length<2||included.size>0)return;
+ const audit=packet.media_omission_audit,eventIds=sorted(publicEvents.map(row=>row.event.id));
+ check(audit?.version===ALL_ZERO_PUBLIC_MEDIA_AUDIT&&audit?.decision==='reviewed',ALL_ZERO_PUBLIC_MEDIA_AUDIT+' is required when every reviewed public image is omitted');
+ check(filled(audit?.reviewer)&&filled(audit?.reviewed_at)&&Number.isFinite(Date.parse(audit.reviewed_at)),ALL_ZERO_PUBLIC_MEDIA_AUDIT+' needs reviewer and reviewed_at');
+ check(filled(audit?.reason),ALL_ZERO_PUBLIC_MEDIA_AUDIT+' needs a corpus-level reason rather than repeated per-image boilerplate');
+ check(same(sorted(list(audit?.event_ids)),eventIds),ALL_ZERO_PUBLIC_MEDIA_AUDIT+' event_ids are stale or incomplete');
+ check(same(sorted(list(audit?.attachment_ids)),attachmentIds),ALL_ZERO_PUBLIC_MEDIA_AUDIT+' attachment_ids are stale or incomplete');
 }
 
 // A transcript-only review never claims that the audio was checked.

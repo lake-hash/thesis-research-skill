@@ -68,7 +68,7 @@ export function preparePacketExport(packet,config) {
   const eventMedia=eventIds=>{
     const output=[],seen=new Set(),sourceImageBindings=[];
     for(const id of eventIds){const event=events.get(id);for(const binding of event?.media_bindings||[]){
-      if(!sourceImageBindings.some(b=>b.sourceId===binding.source_id&&b.attachmentId===binding.attachment_id))sourceImageBindings.push({sourceId:binding.source_id,attachmentId:binding.attachment_id,disposition:binding.disposition,...(binding.reason?{reason:binding.reason}:{})});
+      if(!sourceImageBindings.some(b=>b.sourceId===binding.source_id&&b.attachmentId===binding.attachment_id))sourceImageBindings.push({sourceId:binding.source_id,attachmentId:binding.attachment_id,disposition:binding.disposition,...(binding.reason?{reason:binding.reason}:{}),...(binding.content_summary?{contentSummary:binding.content_summary}:{}),...(binding.omit_category?{omitCategory:binding.omit_category}:{}),...(binding.context_image_role?{contextImageRole:binding.context_image_role}:{}),...(event.media_review?.version?{mediaReviewVersion:event.media_review.version}:{})});
       if(binding.disposition!=='include')continue;const source=raw.get(binding.source_id),attachment=source?.attachments?.find(a=>a.id===binding.attachment_id);if(!attachment)throw Error('Missing bound source image '+binding.source_id+'/'+binding.attachment_id);
       const key=attachment.cover_url+'|'+(attachment.url||'');if(seen.has(key))continue;seen.add(key);output.push({type:'image',coverUrl:attachment.cover_url,...(attachment.url?{url:attachment.url}:{})});
     }}return {media:output,sourceImageBindings};

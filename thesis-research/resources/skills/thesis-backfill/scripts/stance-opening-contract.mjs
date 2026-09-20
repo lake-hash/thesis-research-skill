@@ -1,5 +1,8 @@
-export const STANCE_OPENING_CONTRACT='source-backed-opening/1.3';
-export const TIMELINE_OPENING_CONTRACT='source-backed-timeline-opening/1.2';
+import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
+
+export const STANCE_OPENING_CONTRACT=THESIS_POLICY.openingContract;
+export const TIMELINE_OPENING_CONTRACT=THESIS_POLICY.timelineOpeningContract;
+export const TIMELINE_DIVERSITY_CONTRACT='timeline-opening-diversity/1.0';
 
 export const judgmentAxes=new Set([
  'fundamentals','demand','supply','valuation','risk_reward','execution',
@@ -10,7 +13,7 @@ export const judgmentAxes=new Set([
 export const openingFamilies=new Set([
  'company_state','beneficiary','downside','conditional_upside','risk_reward',
  'valuation','execution_dependency','relative_preference','supported_by',
- 'turnaround'
+ 'turnaround','direct_source_label'
 ]);
 
 const filled=value=>typeof value==='string'&&value.trim().length>0;
@@ -33,7 +36,13 @@ const genericEvaluationPatterns=[
  /\b(?:looks?|is|are|appears?|remains?)\s+(?:appealing|compelling)\b/i,
  /^\s*the (?:investment )?case for .+ is (?:strong|weak)\b/i,
  /^\s*the outlook for .+ is (?:positive|negative)\b/i,
- /\bpresents? (?:a )?(?:compelling|attractive) opportunity\b/i
+ /\bpresents? (?:a )?(?:compelling|attractive) opportunity\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}has (?:further |speculative )?upside\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}could benefit\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}looks stronger\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}(?:is|remains) well positioned\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}is execution-dependent\b/i,
+ /^\s*(?:[A-Z][\w.&-]*(?:['’]s)?\s+){1,5}offers? (?:a|an) opportunity\b/i
 ];
 
 const awkwardPatterns=[
@@ -44,13 +53,14 @@ const awkwardPatterns=[
  {pattern:/\bwell positioned as the case for\b/i,message:'opening combines a directional template with circular case language'}
 ];
 
-const directionalState=/\b(?:bullish on|bearish on|neutral on|look(?:s|ed)? (?:more |less )?(?:attractive|unattractive|stronger|weaker|weak|vulnerable|undervalued|underpriced|underappreciated|overvalued|stretched|risky|riskier|fragile|expensive|productive|exposed)|still looks? expensive|(?:is|are|remain(?:s|ed)?) (?:strengthening|weakening|well positioned|better positioned|worse positioned|attractive|unattractive|vulnerable|high risk|execution-dependent|constrained|exposed|supported|balanced|undervalued|underpriced|underappreciated|overvalued|stretched|risky|fragile|favou?red|preferred|the top pick|an? (?:potential but )?unproven turnaround|a long|a short)|face(?:s|d)? .{0,35}(?:downside|risk|pressure)|(?:has|have) (?:further |speculative )?(?:upside|rerating potential)|offers? (?:better|cleaner|more targeted|speculative|more speculative) .{0,30}?(?:exposure|upside)|risk-reward (?:is improving|has worsened|is balanced|depends)|upside (?:is|remains) offset|(?:valuation )?upside looks? limited|(?:outlook|opportunity|business|investment) (?:is|are|has|have) (?:improving|expanding|improved)|(?:could|can|may|should) (?:both )?(?:benefit|keep growing|grow|deliver|recover|improve|retain|strengthen|gain|earn|sell|become more valuable|win)|retain(?:s|ed)? upside|remain(?:s|ed)? favou?red|remain(?:s|ed)? preferred|(?:is|are) preferred|(?:is|are) favou?red|has operating momentum)\b/i;
+const directionalState=/\b(?:bullish on|bearish on|neutral on|(?:is|are|remain(?:s|ed)?|look(?:s|ed)?) (?:bullish|bearish|neutral)|look(?:s|ed)? (?:more |less )?(?:attractive|unattractive|stronger|weaker|weak|vulnerable|undervalued|underpriced|underappreciated|overvalued|stretched|risky|riskier|fragile|expensive|productive|exposed)|still looks? expensive|(?:is|are|remain(?:s|ed)?) (?:strengthening|weakening|well positioned|better positioned|worse positioned|attractive|unattractive|vulnerable|high risk|execution-dependent|constrained|exposed|supported|balanced|undervalued|underpriced|underappreciated|overvalued|stretched|risky|fragile|favou?rable|favou?red|preferred|unsuitable|the top pick|an? (?:potential but )?unproven turnaround|a long|a short)|face(?:s|d)? .{0,35}(?:downside|risk|pressure)|(?:has|have) (?:further |speculative )?(?:upside|rerating potential)|offers? (?:better|cleaner|more targeted|speculative|more speculative) .{0,30}?(?:exposure|upside)|risk-reward (?:is improving|has worsened|is balanced|depends)|upside (?:is|remains) offset|(?:valuation )?upside looks? limited|(?:outlook|opportunity|business|investment|position|trajectory|setup|valuation|demand case|return case) (?:is|are|has|have|remains?|strengthened|weakened|improved) (?:favou?rable|unattractive|stronger|weaker|improving|expanding|improved|strengthening|weakening|supported)?|(?:carry|carries|carried|gain(?:s|ed)?|support(?:s|ed)?|present(?:s|ed)?|merit(?:s|ed)?|rank(?:s|ed)?|lead(?:s|ed)?|hold(?:s|ing)?) .{0,55}(?:favou?rable|stronger|unattractive|tactical|preferred|strongest|first|support|return case|demand case|demand outlook|company setup|interest)|(?:is|are|was|were) expected to (?:keep )?(?:appreciat|grow|improv)|(?:could|can|may|should) (?:both )?(?:benefit|keep growing|grow|deliver|recover|improve|retain|strengthen|gain|earn|sell|become more valuable|win)|retain(?:s|ed)? upside|remain(?:s|ed)? favou?red|remain(?:s|ed)? preferred|(?:is|are|was|were) preferred|(?:is|are) favou?red|has operating momentum)\b/i;
+const axisDirectionalState=/\b(?:(?:carry|carries|carried) (?:a )?(?:strong |favou?rable |positive |negative )?(?:multi-?year )?(?:return|demand|operating|valuation) outlook|(?:has|have|had) (?:a )?(?:favou?rable|strong|positive|negative) .{0,35}(?:outlook|case|setup)|(?:is|are|was|were) expected to (?:keep )?(?:appreciate|appreciating|grow|growing|improve|improving)|remain(?:s|ed)? (?:a )?preferred .{0,35}(?:exposure|holding|choice)|held the strongest .{0,35}(?:position|ranking)|(?:outlook|trajectory|position) (?:strengthened|weakened|improved))\b/i;
 
 const directLabel=/^(?:bullish|bearish|neutral) on\b/i;
 const attractivenessLabel=/\b(?:looks?|is|are|appears?|remains?)\s+(?:attractive|unattractive)\b/i;
-const reasonConnector=/\b(?:as|because|given|while|although|if|for|with)\b\s+(.+)/i;
+const reasonConnector=/\b(?:as|because|given|while|although|if|for|from|with)\b\s+(.+)/i;
 const metadataLabel=/\b(?:bullish|bearish|neutral)\b/i;
-const mechanismConnector=/^(?:because|as|if|while|although|given|with|despite|but)\b/i;
+const mechanismConnector=/^(?:because|as|if|while|although|given|from|with|despite|but)\b/i;
 const directionValues=new Set(['bullish','bearish','none']);
 const normalizedTicker=value=>String(value||'').trim().toUpperCase();
 
@@ -87,10 +97,10 @@ export function passageProgressionIssues(stanceSentence,body){
  return [...new Set(issues)];
 }
 
-export function timelineOpeningIssues({body,openingConclusion,openingReason,stanceClause,mechanismClause,stanceRealizations,tickerStances}={}){
+export function timelineOpeningIssues({body,openingConclusion,openingReason,stanceClause,mechanismClause,stanceRealizations,tickerStances,sourceExplicitDirection=false}={}){
  const opening=firstSentence(body),issues=[];
  if(!opening)return ['Timeline opening is missing'];
- for(const issue of stanceStructureIssues({sentence:opening,stanceClause,mechanismClause,stanceRealizations,tickerStances}))issues.push('Timeline '+issue);
+ for(const issue of stanceStructureIssues({sentence:opening,stanceClause,mechanismClause,stanceRealizations,tickerStances,sourceExplicitDirection}))issues.push('Timeline '+issue);
  if(genericEvaluationPatterns.some(pattern=>pattern.test(opening)))issues.push('Timeline opening uses promotional or generic evaluation language');
  if(/\b(?:the|this) partnership\b(?!\s+(?:with|between)\s+[a-z])/i.test(opening))issues.push('Timeline opening leaves the partnership counterparty unnamed');
  if(/\bnew products?\b/i.test(opening)&&!/(?:including|such as|:).{0,80}\b[a-z]/i.test(opening))issues.push('Timeline opening refers to new products without identifying them');
@@ -101,14 +111,14 @@ export function timelineOpeningIssues({body,openingConclusion,openingReason,stan
  return [...new Set(issues)];
 }
 
-export function stanceStructureIssues({sentence,stanceClause,mechanismClause,stanceRealizations,tickerStances}={}){
+export function stanceStructureIssues({sentence,stanceClause,mechanismClause,stanceRealizations,tickerStances,sourceExplicitDirection=false}={}){
  const opening=firstSentence(sentence),issues=[];
  if(!filled(stanceClause))issues.push('opening needs an explicit stance_clause');
  if(!filled(mechanismClause))issues.push('opening needs an explicit mechanism_clause');
  if(filled(stanceClause)&&!opening.startsWith(stanceClause.trim()))issues.push('opening must start with the exact stance_clause before evidence or background');
  if(filled(stanceClause)&&tokens(stanceClause).length>18)issues.push('stance_clause must land the investment view within the first 18 words');
- if(filled(stanceClause)&&!directionalState.test(stanceClause))issues.push('stance_clause does not independently state an investment direction when metadata is hidden');
- if(metadataLabel.test(opening))issues.push('visible prose must not copy Bullish/Bearish/Neutral metadata labels');
+ if(filled(stanceClause)&&!directionalState.test(stanceClause)&&!axisDirectionalState.test(stanceClause))issues.push('stance_clause does not independently state an investment direction when metadata is hidden');
+ if(metadataLabel.test(opening)&&sourceExplicitDirection!==true)issues.push('visible Bullish/Bearish/Neutral language requires exact source support');
  if(filled(mechanismClause)){
   const at=opening.indexOf(mechanismClause.trim());
   if(at<0)issues.push('opening does not contain the exact mechanism_clause');
@@ -152,12 +162,13 @@ export function openingPlanIssues(plan,{stance}={}){
  if(plan?.mechanism_location!=='same_sentence')issues.push('opening plan needs the decisive mechanism in the first sentence');
  if(plan?.stance!==undefined&&!['bullish','bearish','none'].includes(plan.stance||stance))issues.push('opening plan legacy stance must be bullish, bearish or none');
  if(plan?.opening_family==='direct_source_label'&&plan?.source_explicit_direction!==true)issues.push('direct Bullish/Bearish/Neutral language requires exact source support');
+ if(plan?.source_explicit_direction!==undefined&&typeof plan.source_explicit_direction!=='boolean')issues.push('source_explicit_direction must be boolean');
  return issues;
 }
 
 export function professionalOpeningIssues(sentence,{subject,openingPlan}={}){
  const value=String(sentence||'').trim(),issues=[];
- if(metadataLabel.test(value))issues.push('visible prose must not copy Bullish/Bearish/Neutral metadata labels');
+ if(metadataLabel.test(value)&&openingPlan?.source_explicit_direction!==true)issues.push('visible Bullish/Bearish/Neutral language requires exact source support');
  if(genericEvaluationPatterns.some(pattern=>pattern.test(value)))issues.push('opening uses promotional or generic evaluation language');
  for(const {pattern,message} of awkwardPatterns)if(pattern.test(value))issues.push(message);
  if(/\b(?:the|this) partnership\b(?!\s+(?:with|between)\s+[a-z])/i.test(value))issues.push('opening leaves the partnership counterparty unnamed');
@@ -168,7 +179,7 @@ export function professionalOpeningIssues(sentence,{subject,openingPlan}={}){
   const reason=value.match(reasonConnector)?.[1]||'';
   if(tokens(reason).length<4||/^(?:it|they|the (?:shares?|company|stock)) (?:is|are|looks?|remains?) (?:attractive|unattractive)\b/i.test(reason))issues.push('attractive/unattractive opening needs an immediate specific mechanism');
  }
- if(!directionalState.test(value))issues.push('opening clause does not state a specific investment direction');
+ if(!directionalState.test(value)&&!axisDirectionalState.test(value))issues.push('opening clause does not state a specific investment direction');
  return issues;
 }
 
@@ -176,7 +187,7 @@ export function professionalOpeningIssues(sentence,{subject,openingPlan}={}){
 export const stanceOpeningIssues=value=>professionalOpeningIssues(value);
 
 export function openingChainIssues({stanceSentence,body,subject,openingPlan,tickerStances}={}){
- const issues=[...openingPlanIssues(openingPlan,{stance:openingPlan?.stance}),...professionalOpeningIssues(stanceSentence,{subject,openingPlan}),...stanceStructureIssues({sentence:stanceSentence,stanceClause:openingPlan?.stance_clause,mechanismClause:openingPlan?.mechanism_clause,stanceRealizations:openingPlan?.stance_realizations,tickerStances}),...passageProgressionIssues(stanceSentence,body)];
+ const issues=[...openingPlanIssues(openingPlan,{stance:openingPlan?.stance}),...professionalOpeningIssues(stanceSentence,{subject,openingPlan}),...stanceStructureIssues({sentence:stanceSentence,stanceClause:openingPlan?.stance_clause,mechanismClause:openingPlan?.mechanism_clause,stanceRealizations:openingPlan?.stance_realizations,tickerStances,sourceExplicitDirection:openingPlan?.source_explicit_direction}),...passageProgressionIssues(stanceSentence,body)];
  const reason=openingPlan?.mechanism||'',sameSentence=overlap(stanceSentence,reason)>=0.35;
  if(openingPlan?.mechanism_location==='same_sentence'&&!sameSentence)issues.push('opening does not contain the reviewed mechanism');
  return [...new Set(issues)];
@@ -187,6 +198,9 @@ export function openingSkeleton(value){
  if(sentence.startsWith('bullish on '))return 'direct-bullish';
  if(sentence.startsWith('bearish on '))return 'direct-bearish';
  if(sentence.startsWith('neutral on '))return 'direct-neutral';
+ if(/\b(?:is|are|remain(?:s|ed)?|look(?:s|ed)?) bullish\b/.test(sentence))return'source-bullish';
+ if(/\b(?:is|are|remain(?:s|ed)?|look(?:s|ed)?) bearish\b/.test(sentence))return'source-bearish';
+ if(/\b(?:is|are|remain(?:s|ed)?|look(?:s|ed)?) neutral\b/.test(sentence))return'source-neutral';
  if(/\blooks? attractive\b/.test(sentence))return 'looks-attractive';
  if(/\blooks? unattractive\b/.test(sentence))return 'looks-unattractive';
  if(/\b(?:is|are|remain(?:s|ed)?) well positioned\b/.test(sentence))return 'well-positioned';
@@ -215,4 +229,61 @@ export function openingDiversityReview(values,{rollingWindow=10,rollingLimit=2,f
  }
  for(const[skeleton,count]of Object.entries(counts))if(skeletons.length>=20&&count/skeletons.length>familyShareLimit)warnings.push(`opening skeleton ${skeleton} is ${count}/${skeletons.length} cards and needs corpus-level editorial review`);
  return{errors:[...new Set(errors)],warnings:[...new Set(warnings)],skeletons,counts};
+}
+
+export function timelineOpeningSkeleton(value,{subject}={}){
+ let sentence=normalize(value),subjectText=normalize(subject);
+ if(subjectText&&sentence.startsWith(subjectText+' '))sentence=sentence.slice(subjectText.length+1);
+ if(/^(?:should |could |may )?remain(?:s|ed)? (?:favou?red|preferred)\b/.test(sentence))return'remain-favored';
+ if(/^look(?:s|ed)? vulnerable\b/.test(sentence))return'looks-vulnerable';
+ if(/^look(?:s|ed)? attractive\b/.test(sentence))return'looks-attractive';
+ if(/^risk reward (?:is|was) balanced\b/.test(sentence))return'risk-reward-balanced';
+ if(/^risk reward (?:has )?worsened\b/.test(sentence))return'risk-reward-worsened';
+ if(/^(?:is|was|remains?|remained) strengthening\b/.test(sentence))return'strengthening';
+ if(/^(?:faces?|faced) (?:downside|risk|pressure)\b/.test(sentence))return'faces-risk';
+ return openingSkeleton(value);
+}
+
+function timelineSurfaceShape(value,{subject}={}){
+ const sentence=normalize(value),subjectText=normalize(subject);
+ const subjectFirst=subjectText&&sentence.startsWith(subjectText+' ');
+ const causal=/\b(?:because|as|while|although|if|when|given|after|before|unless)\b/.test(sentence);
+ return`${subjectFirst?'subject-first':'driver-first'}:${causal?'causal':'simple'}`;
+}
+
+export function timelineDiversityReview(groups,{subjectFirstRunLimit=3,repeatLimit=2}={}){
+ const errors=[],warnings=[],records=[];
+ for(const group of Array.isArray(groups)?groups:[]){
+  const values=Array.isArray(group?.values)?group.values:[],skeletons=values.map(value=>timelineOpeningSkeleton(value,{subject:group?.subject})),shapes=values.map(value=>timelineSurfaceShape(value,{subject:group?.subject}));
+  const counts={};for(const skeleton of skeletons)counts[skeleton]=(counts[skeleton]||0)+1;
+  for(let index=1;index<skeletons.length;index++)if(skeletons[index]===skeletons[index-1])errors.push(`Timeline ${group.record_id} repeats adjacent opening family ${skeletons[index]} at rows ${index} and ${index+1}`);
+  for(let start=0;start+subjectFirstRunLimit<=shapes.length;start++)if(shapes.slice(start,start+subjectFirstRunLimit).every(shape=>shape==='subject-first:causal'))errors.push(`Timeline ${group.record_id} repeats the subject-first causal sentence shape across rows ${start+1}-${start+subjectFirstRunLimit}`);
+  for(const[skeleton,count]of Object.entries(counts))if(count>repeatLimit)warnings.push(`Timeline ${group.record_id} uses opening family ${skeleton} ${count} times and needs sequence-level editorial review`);
+  records.push({record_id:group?.record_id,subject:group?.subject,skeletons,shapes,counts});
+ }
+ return{errors:[...new Set(errors)],warnings:[...new Set(warnings)],records};
+}
+
+export const TEMPORAL_FEED_DIVERSITY_CONTRACT='temporal-feed-opening-diversity/1.0';
+
+export function temporalFeedOpeningFamily(value){
+ const sentence=normalize(value);
+ if(/\bremain(?:s|ed)?\s+(?:favou?red|preferred|attractive|unattractive|vulnerable|supported|balanced|exposed|constrained)\b/.test(sentence))return'remain-evaluation';
+ if(/\blook(?:s|ed)?\s+(?:favou?red|preferred|attractive|unattractive|stronger|weaker|vulnerable|undervalued|overvalued|stretched)\b/.test(sentence))return'look-evaluation';
+ if(/\b(?:is|are|was|were)\s+(?:favou?red|preferred|attractive|unattractive|vulnerable|supported|balanced|exposed|constrained)\b/.test(sentence))return'be-evaluation';
+ if(/\b(?:has|have)\s+(?:further\s+|speculative\s+)?upside\b/.test(sentence))return'has-upside';
+ if(/\b(?:could|can|may|should)\s+(?:both\s+)?benefit\b/.test(sentence))return'could-benefit';
+ return openingSkeleton(value);
+}
+
+export function temporalFeedDiversityReview(values,{rollingWindow=6,rollingLimit=2,familyShareLimit=0.25,minShareCount=3}={}){
+ const families=(Array.isArray(values)?values:[]).map(temporalFeedOpeningFamily),errors=[],warnings=[],counts={};
+ for(const family of families)counts[family]=(counts[family]||0)+1;
+ for(let index=1;index<families.length;index++)if(families[index]===families[index-1])errors.push(`Temporal Feed repeats adjacent opening family ${families[index]} at rows ${index} and ${index+1}`);
+ for(let start=0;start+rollingWindow<=families.length;start++){
+  const window={};for(const family of families.slice(start,start+rollingWindow))window[family]=(window[family]||0)+1;
+  for(const[family,count]of Object.entries(window))if(count>rollingLimit)errors.push(`Temporal Feed opening family ${family} appears ${count} times in rows ${start+1}-${start+rollingWindow}`);
+ }
+ for(const[family,count]of Object.entries(counts))if(count>=minShareCount&&count/families.length>familyShareLimit)errors.push(`Temporal Feed opening family ${family} is ${count}/${families.length} rows and exceeds the surface-language limit`);
+ return{contract:TEMPORAL_FEED_DIVERSITY_CONTRACT,errors:[...new Set(errors)],warnings:[...new Set(warnings)],families,counts};
 }

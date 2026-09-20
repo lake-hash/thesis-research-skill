@@ -1,5 +1,9 @@
 # Final Public Projection Gate
 
+This is the final-expression implementation of the shared
+[Thesis core contract](../../references/thesis-core-contract.md). It adds required
+review fields and commands without changing the core quality boundary.
+
 Run this gate after grouping, source selection, Timeline filtering, prose edits,
 ticker binding and media selection. It reviews what the user will actually see,
 not the generator draft or stored event bodies.
@@ -29,6 +33,10 @@ row without its own ticker may resolve to the canonical record only when the
 company identity is unambiguous and `object_resolution: record` is explicit in
 legacy packets. Generation 3.2 requires every Timeline expression to carry its
 own ticker set.
+Each row also records `media_sha256`, `media_count` and `media_gap_count` from
+the deterministic presentation. The hash covers included media, retrieval gaps
+and visual dependency, so changing or dropping an image invalidates review even
+when prose and tickers are unchanged.
 It also records `company_specific_increment`, `portfolio_operation_free`,
 `process_language_free`, `prose_coherent`, `repetition_free`,
 `related_context_excluded` and `why_specific`. It must additionally record:
@@ -54,17 +62,27 @@ Every expression records `specific_directional_state`,
 historical snapshot without inheriting the current card stance.
 
 Main-card rows additionally record `stance_sentence` and
-`opening_contract: source-backed-opening/1.3`, exact stance/mechanism clauses,
+`opening_contract: source-backed-opening/1.4`, exact stance/mechanism clauses,
 per-ticker realization spans and `metadata_hidden_direction_clear`. Per-ticker directions, rather than
 one global card enum, are part of the presentation hash. They also record the exact
 `opening_plan`.
 Every main card and Timeline row records
 `ticker_stance_contract: per-expression-ticker-stance/1.0` and one source-backed
 `bullish`, `bearish` or `none` direction per displayed ticker.
+When visible prose uses Bullish, Bearish or Neutral, the row also records
+`source_explicit_direction: true`; the deterministic gate verifies that the same
+word appears in the exact expression source and matches an expression-level ticker
+stance. A review boolean cannot authorize wording absent from the original.
 Corpus concentration warnings require a reviewed
 `opening_distribution_review`; they never authorize automatic synonym rotation.
+Timeline sequence warnings require a reviewed `timeline_distribution_review`
+with contract `timeline-opening-diversity/1.0`, the exact record IDs reviewed,
+warning count and reason. Deterministic errors block delivery before that review:
+adjacent rows cannot repeat one opening family, and three consecutive rows cannot
+reuse a subject-first causal template. Timeline variety must come from distinct
+source logic, not mechanical synonym rotation.
 Timeline rows record `timeline_opening_contract:
-source-backed-timeline-opening/1.2`, exact stance/mechanism clauses, per-ticker
+source-backed-timeline-opening/1.3`, exact stance/mechanism clauses, per-ticker
 realization spans, `metadata_hidden_direction_clear`, `direction_visible_immediately`,
 `mechanism_visible_immediately`, `relationship_complete` and
 `continuation_advances`. They are evaluated against their dated what/why and may
@@ -85,6 +103,8 @@ Block delivery when any visible expression:
 - repeats the current-card source in Timeline;
 - contains source-process, third-person-author or reviewer/audit narration;
 - adds unsupported meaning, has incomplete ticker coverage, or unresolved media;
+- drops included media between packet, presentation and final review, or carries
+  media/gap counts that no longer match the reviewed expression;
 - exceeds 500 prose characters or contains a generated title;
 - is not covered by the exact final-presentation review hash.
 - opens with or retains portfolio operation language such as position size,
@@ -108,6 +128,8 @@ Block delivery when any visible expression:
   mechanism to a later sentence;
 - rewrites a Timeline row by copying the current card stance rather than using
   the historical event's reviewed what, why and increment;
+- repeats an adjacent Timeline opening family or forms a three-row run of the
+  same subject-first causal sentence shape;
 
 Changing prose, source, date, tickers, grouping, media or Timeline visibility
 invalidates the sidecar. Re-review affected expressions and regenerate the hash.

@@ -1,5 +1,8 @@
 # Thesis, Update And Source Media Selection
 
+This file expands ticker and media decisions under the shared
+[Thesis core contract](../../references/thesis-core-contract.md).
+
 Classify a complete contemporaneous expression: author text, potentially relevant
 attached images, and required reply/quote context. Preserve exact attribution and
 certainty. Images are evidence, not independent thesis candidates.
@@ -118,6 +121,28 @@ gap as described in the output contract. Every reviewed event declares:
 }
 ```
 
+Every public event with attachments also declares an exact review receipt:
+
+```json
+{
+  "media_review": {
+    "version": "expression-media/1.0",
+    "reviewer": "review identity",
+    "reviewed_at": "2026-09-19T00:00:00Z",
+    "attachment_count": 2,
+    "include_count": 1,
+    "attachment_ids": ["source-1|image-1", "source-1|image-2"],
+    "decision": "include | mixed | omit_all | retrieval_pending",
+    "reason": "Expression-level reason for the result"
+  }
+}
+```
+
+Each available binding records an image-specific `content_summary` and decision
+`reason`. Omitted images also use one `omit_category`: `decorative`, `duplicate`,
+`technical_only`, `position_only`, `unrelated`, `low_legibility`, `privacy`, or
+`context_not_material`. Do not reuse one generic reason across unrelated images.
+
 - `required`: the thesis/update cannot be understood or supported without the
   image. Inspect and include relevant images. Unavailable evidence blocks approval.
 - `helpful`: text qualifies independently, but the image materially improves
@@ -162,5 +187,11 @@ visible, but the run must report the gap; image-dependent claims remain held.
 Product `media` is derived from reviewed `include` bindings; handwritten or
 borrowed media fails delivery validation. Unselected/source-only posts produce no
 product media.
+
+When at least two distinct attachments are linked to approved public expressions
+and all are omitted, the packet needs `media_omission_audit` version
+`all-zero-public-media-audit/1.0`, with reviewer/date, exact public event IDs,
+exact `source_id|attachment_id` values and a corpus-level reason. This receipt
+prevents blanket omission; it does not create a quota for public images.
 
 Ticker logos and person portraits are separate entity images.

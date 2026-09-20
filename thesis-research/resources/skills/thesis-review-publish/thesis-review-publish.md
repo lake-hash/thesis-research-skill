@@ -11,8 +11,9 @@ prepare a publish operation; it must not infer authorization to publish.
 - Original sources and necessary parent, quoted, or transcript context.
 - Current approved record, relevant event history, pending candidates, and
   entity-binding evidence.
-- The versioned classification and editorial rules in
-  `thesis-field-notes/`.
+- The bundled Thesis core contract and machine policy, plus any stricter
+  product-specific classification or editorial rules available in the
+  recipient's workspace.
 - The shared [operation contract](../references/thesis-operation-contract.md),
   including candidate states, baseline versions, and publication keys.
 
@@ -75,9 +76,9 @@ verification, notification status, and any skipped conflicts.
 Use the contract's candidate and state fields so an approved, revised, held or
 rejected result can be reconciled by thesis-ops without reading prose.
 
-Use the prototype's `publish-reviewed.js` only after inspecting its current
-inputs and authorization boundary. It publishes an approved edition; it is not
-a substitute for per-candidate review, local edits, or conflict recovery.
+Use a recipient prototype's publication adapter only after inspecting its
+current inputs and authorization boundary. It publishes an approved edition; it
+is not a substitute for per-candidate review, local edits, or conflict recovery.
 
 ## Product field handoff
 
