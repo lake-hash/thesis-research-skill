@@ -8,7 +8,7 @@ incremental updates, review, export, and pipeline operations.
 Install directly from GitHub:
 
 ```bash
-npx skills add lake-hash/thesis-research-skill --skill thesis-research -g --copy -y
+npx skills add lake-hash/thesis-research-skill --skill thesis-research --agent codex -g --copy -y
 ```
 
 Or clone this repository, then copy or symlink the `thesis-research` directory
