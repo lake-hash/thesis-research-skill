@@ -9,8 +9,10 @@ This is the portable entrypoint for the complete Thesis workflow. It bundles
 the backfill, update, review/publish, and operations modes plus their shared
 contracts, prompts, validators, and export scripts.
 
-Backfill uses the current six-stage flow: Archive, Triage, Facts, Media,
-Language, and Delivery. The bundled machine policy, packed-stage planner,
+Backfill uses the current seven-stage flow: Archive, Triage, Facts, optional
+weekly grouping, Media, Language, and Delivery. Canonical company identity is
+resolved before grouping so one author/company history cannot fragment across
+record aliases. The bundled machine policy, packed-stage planner,
 candidate-closure checks, deterministic presentation, and final-public gates
 are part of the package; do not replace them with ad hoc prompt-only steps.
 
@@ -45,6 +47,9 @@ For work spanning modes, read the
   subject to the same limit.
 - Preserve original sources, speakers, timestamps, quotations, hashes, and
   immutable historical versions. Do not infer missing logic or authorship.
+- Keep reviewed helpful media, including source-bound price charts, attached to
+  the exact current or Timeline expression they explain. A chart may clarify an
+  independently qualifying thesis but cannot supply a missing judgment or reason.
 - Build and review the final presentation, not only intermediate records. Final
   review must cover every visible card and Timeline row and bind to the exact
   presentation hash.

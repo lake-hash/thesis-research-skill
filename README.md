@@ -32,6 +32,9 @@ The top-level skill routes among four bundled workflows:
 
 All cross-workflow references and scripts are included under
 `thesis-research/resources/skills/` with their original relative layout.
+The package includes canonical author/company history consolidation, optional
+weekly Feed compression, expression-local media handling, and hash-bound final
+presentation review.
 
 ## Requirements
 

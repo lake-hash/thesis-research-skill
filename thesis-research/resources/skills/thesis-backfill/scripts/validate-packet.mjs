@@ -175,7 +175,7 @@ export function validatePacket(packet,{baseline,requireHistoryCoverage=false,req
  if(packet.completion?.review==='complete'&&decisions.some(d=>['context','no_judgment'].includes(d.disposition))){const o=packet.omission_review;check(filled(o?.reviewer)&&filled(o?.method)&&filled(o?.reason)&&Array.isArray(o?.source_ids)&&o.source_ids.length>0&&o.source_ids.every(id=>sourceMap.has(id)&&['context','no_judgment'].includes(dispositions.get(id)?.disposition)),'Complete review needs a recorded omission sample');}
  validatePacketMediaAudit({...packet,records},sourceMap,check,{required:strictGeneration});
  if(strictGeneration)validateGenerationContract(packet,{baseline,check,warnings,requireLatest:requireGenerationContract});
- if(strictGeneration)validateObjectGrouping(records,packet.object_overlap_reviews,sourceMap,check);
+ if(strictGeneration)validateObjectGrouping(records,packet.object_overlap_reviews,sourceMap,check,packet);
  if(requireRunReview||packet.generation_policy?.review_contract||baseline?.generation_policy?.review_contract)validateRunReview(packet,check);
  if(baseline){
   for(const s of baseline.sources||[]){check(sourceMap.has(s.id)&&sourceMap.get(s.id).text_sha256===s.text_sha256,'Prior source revision removed/overwritten '+s.id);

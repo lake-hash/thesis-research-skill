@@ -3,6 +3,14 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {validatePacket} from './validate-packet.mjs';
 import {validateObjectGrouping} from './run-review-contract.mjs';
+import {canonicalCompanyConflicts} from './canonical-company-history.mjs';
+
+const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+export function sharedBatchSourceIdentity(source){
+ const {locator,window_source,context_for_source_ids,...shared}=source||{};
+ return canonical(shared);
+}
+export function sameBatchSourceIdentity(left,right){return JSON.stringify(sharedBatchSourceIdentity(left))===JSON.stringify(sharedBatchSourceIdentity(right));}
 
 export function validateBatch(packets, catalog, overlapReviews = []) {
   const errors = [];
@@ -13,10 +21,11 @@ export function validateBatch(packets, catalog, overlapReviews = []) {
   }
   if (![...catalog.records,...catalog.pending].every(r => r && typeof r.id === 'string' && typeof r.author_id === 'string'))
     return {ok:false,errors:['Malformed active/pending catalog entry']};
-  const byId = new Map(), sources = new Map();
+  const byId = new Map(), sources = new Map(),canonicalAliases=[];
+  canonicalAliases.push(...(catalog.canonical_company_aliases||catalog.canonical_object_aliases||[]));
   for (const source of [...(catalog.sources || []), ...packets.flatMap(p => p?.sources || [])]) {
     const previous = sources.get(source.id);
-    check(!previous || JSON.stringify(previous) === JSON.stringify(source), 'Conflicting source identity across batch/catalog: ' + source.id);
+    check(!previous || sameBatchSourceIdentity(previous,source), 'Conflicting source identity across batch/catalog: ' + source.id);
     sources.set(source.id, source);
   }
   for (const record of [...catalog.records, ...catalog.pending]) {
@@ -26,6 +35,7 @@ export function validateBatch(packets, catalog, overlapReviews = []) {
   }
   const newIds = new Set();
   for (const packet of packets) {
+    canonicalAliases.push(...(packet.canonical_company_aliases||packet.canonical_object_aliases||[]));
     const validation = validatePacket(packet, {requireHistoryCoverage:true,requireGenerationContract:true,
       requireProseLimit:true,requireRunReview:true});
     errors.push(...validation.errors.map(e => packet.subject_id + ': ' + e));
@@ -48,9 +58,10 @@ export function validateBatch(packets, catalog, overlapReviews = []) {
   }
   // Scope checks to pairs affected by this batch; pre-existing unrelated defects do not block a new author.
   const all = [...byId.values()];
+  for(const issue of canonicalCompanyConflicts(all,canonicalAliases).issues)check(false,issue);
   const reviews = [...overlapReviews, ...packets.flatMap(p => p.object_overlap_reviews || [])];
   for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
-    if (newIds.has(all[i].id) || newIds.has(all[j].id)) validateObjectGrouping([all[i], all[j]], reviews, sources, check);
+    if (newIds.has(all[i].id) || newIds.has(all[j].id)) validateObjectGrouping([all[i], all[j]], reviews, sources, check,canonicalAliases);
   }
   return {ok:errors.length === 0,errors,counts:{packets:packets.length,active_records:newIds.size},
     limitations:['The catalog index must faithfully reflect active and pending storage. Structural checks do not verify source meaning or search completeness.']};

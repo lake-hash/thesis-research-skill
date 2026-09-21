@@ -15,16 +15,18 @@ const commands={
  presentation:{script:path.join(root,'build-presentation.mjs'),prefix:[]},
  'candidate-gate':{script:path.join(root,'validate-candidate-accounting.mjs'),prefix:[]},
  facts:{script:path.join(root,'validate-fact-ledger.mjs'),prefix:[]},
+ 'weekly-group':{script:path.join(root,'weekly-group.mjs'),prefix:[]},
  final:{script:path.join(root,'final-public-projection.mjs'),prefix:[]},
  batch:{script:path.join(root,'validate-batch.mjs'),prefix:[]},
  pack:{script:path.join(root,'plan-packed-stage.mjs'),prefix:[]},
  'prepare-feed':{script:path.join(reviewRoot,'prepare-card-export.mjs'),prefix:[]},
  'project-feed':{script:path.join(reviewRoot,'project-thesis-feed.mjs'),prefix:[]},
+ 'canonicalize-history':{script:path.join(root,'canonical-company-history.mjs'),prefix:[]},
  delivery:{script:path.join(reviewRoot,'validate-delivery.mjs'),prefix:[]}
 };
 
 function usage(){
- return `Usage: thesis-pipeline.mjs COMMAND [args...]\n\nCommands:\n  policy\n  prompt STAGE [OUTPUT]\n  facts FACTS ARCHIVE [--triage TRIAGE] [--candidate-review REVIEW]\n  gate-run RUN_SPEC\n  validate PACKET [--baseline PREVIOUS] [--allow-editorial-corrections]\n  validate-backfill PACKET --triage TRIAGE [--candidate-review REVIEW] [packet options]\n  validate-archive PACKET [--baseline PREVIOUS]\n  candidate-gate TRIAGE PACKET [CANDIDATE_REVIEW]\n  presentation PACKET PRESENTATION [options]\n  final PACKET PRESENTATION REVIEW [--published]\n  batch BATCH_SPEC\n  pack PACKED_STAGE_SPEC OUTPUT\n  prepare-feed PACKET CONFIG NEW_OUTPUT_DIR\n  project-feed PLAYBOOK_DATA FEED_PROJECTION\n  delivery CARDS MANIFEST [--allow-legacy]\n  test`;
+ return `Usage: thesis-pipeline.mjs COMMAND [args...]\n\nCommands:\n  policy\n  prompt STAGE [OUTPUT]\n  facts FACTS ARCHIVE [--triage TRIAGE] [--candidate-review REVIEW]\n  weekly-group PACKET GROUPING_OUTPUT\n  canonicalize-history INPUT OUTPUT [ALIASES]\n  gate-run RUN_SPEC\n  validate PACKET [--baseline PREVIOUS] [--allow-editorial-corrections]\n  validate-backfill PACKET --triage TRIAGE [--candidate-review REVIEW] [packet options]\n  validate-archive PACKET [--baseline PREVIOUS]\n  candidate-gate TRIAGE PACKET [CANDIDATE_REVIEW]\n  presentation PACKET PRESENTATION [options]\n  final PACKET PRESENTATION REVIEW [--published]\n  batch BATCH_SPEC\n  pack PACKED_STAGE_SPEC OUTPUT\n  prepare-feed PACKET CONFIG NEW_OUTPUT_DIR\n  project-feed PLAYBOOK_DATA FEED_PROJECTION\n  delivery CARDS MANIFEST [--allow-legacy]\n  test`;
 }
 
 function testFiles(dir){return fs.readdirSync(dir).filter(name=>/^test-.*\.mjs$/.test(name)).sort().map(name=>path.join(dir,name));}

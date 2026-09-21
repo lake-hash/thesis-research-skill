@@ -15,14 +15,18 @@ const required=[
  'resources/skills/thesis-backfill/prompts/facts.md',
  'resources/skills/thesis-backfill/references/pipeline-contract.md',
  'resources/skills/thesis-backfill/references/runtime-contract.md',
+ 'resources/skills/thesis-backfill/references/weekly-aggregation.md',
  'resources/skills/thesis-backfill/references/source-fidelity-contract.md',
  'resources/skills/thesis-backfill/references/stance-opening-contract.md',
+ 'resources/skills/thesis-backfill/scripts/canonical-company-history.mjs',
  'resources/skills/thesis-backfill/scripts/fact-candidate-closure-contract.mjs',
  'resources/skills/thesis-backfill/scripts/plan-packed-stage.mjs',
  'resources/skills/thesis-backfill/scripts/run-gates.mjs',
+ 'resources/skills/thesis-backfill/scripts/source-coverage-contract.mjs',
  'resources/skills/thesis-backfill/scripts/source-fidelity-contract.mjs',
  'resources/skills/thesis-backfill/scripts/stance-opening-contract.mjs',
  'resources/skills/thesis-backfill/scripts/thesis-pipeline.mjs',
+ 'resources/skills/thesis-backfill/scripts/weekly-group.mjs',
  'resources/skills/thesis-review-publish/SKILL.md',
  'resources/skills/thesis-review-publish/scripts/project-thesis-feed.mjs',
  'resources/skills/thesis-review-publish/scripts/test-feed-projection.mjs',
@@ -53,7 +57,8 @@ for(const file of files){
  const ext=path.extname(file);
  if(!['.md','.mjs','.js','.cjs','.yaml','.yml'].includes(ext))continue;
  const text=fs.readFileSync(file,'utf8');
- if(file!==fileURLToPath(import.meta.url)&&text.includes('/Users/lake'))failures.push(relative(file)+': contains a local absolute path');
+  if(file!==fileURLToPath(import.meta.url)&&text.includes('/Users/lake'))failures.push(relative(file)+': contains a local absolute path');
+ if(file!==fileURLToPath(import.meta.url)&&/(?:alva_your_key|gho_[A-Za-z0-9]+|sk-[A-Za-z0-9]{20,})/.test(text))failures.push(relative(file)+': contains a credential-like token');
  if(ext==='.md')checkMarkdown(file,text);
  if(['.mjs','.js','.cjs'].includes(ext))checkImports(file,text);
 }

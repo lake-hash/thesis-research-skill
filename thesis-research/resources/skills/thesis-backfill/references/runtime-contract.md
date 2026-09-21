@@ -66,7 +66,10 @@ shared Thesis core contract and deterministic validators remain authoritative.
 1. Triage identifies candidates but writes no prose.
 2. Source review produces `reviewed-thesis-facts/1.0` with grouping, evidence,
    event dispositions, tickers, directions and media inventory.
-3. Language generation consumes only approved facts.
-4. Final review checks the exact rendered projection and hash.
+3. Optional `weekly-group` creates a compression map after event-level review;
+   it preserves every event and is not a replacement for the Facts ledger.
+4. Media and Language consume only approved facts and, when enabled, the
+   weekly compression map.
+5. Final review checks the exact rendered projection and hash.
 
 Publication, notification and schedules remain separate authorized operations.

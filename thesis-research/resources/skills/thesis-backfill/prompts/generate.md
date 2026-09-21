@@ -20,6 +20,13 @@ contiguous verbatim span from that source; `purpose` is `judgment`, `reason` or
 `context`. Do not return claim summaries, `source_ids`, paraphrases or synthetic
 quotes in the claim map.
 
+When the input includes a `weekly-thesis-grouping/1.0` artifact, also produce
+one `weekly_description` per eligible group. The weekly description is a concise
+reader-facing summary of that UTC week's member events. It must preserve every
+material increment, condition and risk; it must not merge a reversal or a new
+trade action. Keep member-event claim maps separate so every sentence remains
+source-bound.
+
 Rules:
 
 - Sentence one states the source-owned investment direction and decisive mechanism.

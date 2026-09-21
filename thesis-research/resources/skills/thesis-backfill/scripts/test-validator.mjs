@@ -239,6 +239,17 @@ test('Accepted source images are required, bound once and exported with the even
  assert.deepEqual(b.cards[0].media,[{type:'image',coverUrl:'https://example.invalid/source-image.png'}]);
  b.cards[0].media=[];assert.equal(validateDelivery(b.cards,b.manifest).ok,false);
 });
+test('A helpful stock-price chart survives as expression-local Timeline media',()=>{
+ const p=generationFixture(),older=addUpdate(p,'price-context','Acme could strengthen as customer demand expands despite a sharp dated drawdown.','2026-09-08T12:00:00Z'),olderSource=p.sources.find(source=>source.id==='price-context');
+ olderSource.attachment_status='complete';olderSource.attachments=[{id:'price-chart',type:'image',cover_url:'https://example.invalid/acme-price-chart.png'}];
+ older.type='FIRST_OBSERVED';p.records[0].events.find(event=>event.id==='e1').type='EVIDENCE';
+ older.asset_bindings=older.asset_bindings.map(binding=>({...binding,source_ids:['price-context']}));
+ older.visual_dependency='helpful';older.visual_dependency_reason='The dated price chart clarifies the drawdown and market reaction around the independently supported company thesis.';
+ older.media_bindings=[{source_id:'price-context',attachment_id:'price-chart',disposition:'include',content_summary:'A dated stock-price chart showing the drawdown discussed alongside the retained company thesis.',reason:'The chart materially clarifies the dated market reaction without supplying the Thesis judgment or reason.'}];mediaReview(older,'include');
+ p.records[0].assessment_as_of='2026-09-09';p.records[0].events.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));p.records[0].timeline_review.sort((a,b)=>Date.parse(p.records[0].events.find(event=>event.id===a.event_id).at)-Date.parse(p.records[0].events.find(event=>event.id===b.event_id).at));
+ const view=buildPresentation(p),row=view.cards[0].timeline.find(item=>item.id===older.id),detail=view.details.find(item=>item.id===row?.detail_id);
+ assert(row);assert.equal(row.media.length,1);assert.equal(row.media[0].attachment_id,'price-chart');assert.equal(detail.media[0].attachment_id,'price-chart');
+});
 test('A relevant quoted-post image can be helpful explanatory context without author adoption',()=>{
  const p=generationFixture(),e=p.records[0].events[0],ctx=source('quoted','The earlier chart shows the support level.','beth');ctx.attachment_status='complete';ctx.attachments=[{id:'quoted-image',type:'image',cover_url:'https://example.invalid/quoted-chart.png'}];
  p.sources.push(ctx);p.decisions.push({source_id:ctx.id,disposition:'used',reason:'Quoted chart context for the author statement.'});e.context_source_ids=[ctx.id];e.visual_dependency='helpful';e.visual_dependency_reason='The quoted chart helps explain the market context around the independently supported thesis.';

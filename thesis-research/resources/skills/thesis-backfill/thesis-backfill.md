@@ -24,6 +24,11 @@ Compile `prompt triage` and process bounded source batches. Merge the model resu
 with deterministic ticker/thread hints. Run context recovery only for
 `needs_context`. Do not draft or group records here.
 
+A run cannot be complete while `needs_context` rows remain unresolved. Inspect
+their required parent/thread/image context and convert each to a candidate,
+evidence-bound `no_judgment`, technical/source-only history, or a concrete hold.
+Persist that decision; do not silently leave it behind when Facts begins.
+
 Checkpoint by immutable source hash. An unchanged source reuses its triage result.
 
 ## 3. Source Review And Facts
@@ -49,6 +54,13 @@ Inventory expression and quote/reply attachments after facts are approved.
 Generate contact sheets when useful and batch visual inspection. Each attachment
 gets an image-specific include, omit or retrieval-gap decision. Media never
 supplies missing what, why, ticker or direction.
+
+## 4.5 Weekly grouping (optional)
+
+When the product wants fewer repeated Feed items, run `weekly-group` after Facts
+review. It groups only same-author, same-company, same-UTC-week expressions with
+the same expression-local ticker directions. It keeps the raw event IDs and
+sources, and separates reversals, actions and changed conditions.
 
 ## 5. Language
 

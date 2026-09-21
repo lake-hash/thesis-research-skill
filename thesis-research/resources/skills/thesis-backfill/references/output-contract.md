@@ -21,6 +21,12 @@ language generation cannot change the approved semantic fields.
 `decisions`, `records`, `pending`. It also has `schema_version: "1.0"`,
 `subject_id`, `as_of`, `requested_scope`, and `completion`.
 
+An optional `weekly_grouping` field may reference the output of
+`weekly-group.mjs`. It is a projection and language-compression artifact, not a
+replacement for `records[].events`. Every group retains `member_event_ids`,
+`anchor_event_id`, `source_ids`, `week_start`, `week_end` and the exact
+expression-local `ticker_stances`.
+
 ## Manifest And Coverage
 
 - `authors`: `{id, name, identity_status, evidence_urls}`. Status is `verified` or
@@ -218,6 +224,15 @@ When merging old records, retain their IDs and events with `superseded_by`
 pointing to the active record. Resolve that relationship when displaying combined
 history; do not duplicate original event IDs in another record. A merge must stay
 within the same author and cannot create a redirect cycle.
+
+Canonical company matching happens before Feed and Timeline assembly. Resolve a
+company from verified primary instrument/entity bindings and an approved
+`canonical_company_aliases` catalog when issuer names or legacy keys differ. The
+hard gate fails when one `author_id` and canonical company key still point to
+multiple active company records, and lists every conflicting record ID. Preserve
+the old records and events through `superseded_by`; never copy or delete events to
+make the gate pass. `theme` and `basket` are explicit independent roles and do not
+merge merely because they mention the same ticker.
 
 Bindings: `{entity_name, symbol, market, instrument_type, role, basis,
 source_ids, verification_url, display_note?}`. Roles: `primary`, `vehicle`,

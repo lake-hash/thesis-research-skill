@@ -24,7 +24,7 @@ node scripts/thesis-pipeline.mjs prompt generate generate-prompt.md
 node scripts/thesis-pipeline.mjs prompt review review-prompt.md
 ```
 
-## Six-Stage Workflow
+## Seven-Stage Workflow
 
 1. **Archive:** verify identity and requested scope; normalize, deduplicate and
    checkpoint original text, dates, context, attachments and hashes.
@@ -34,12 +34,24 @@ node scripts/thesis-pipeline.mjs prompt review review-prompt.md
    `reviewed-thesis-facts/1.0`. Pack independent object groups, salvage valid
    group results and retry only failed IDs. Close every complete triage candidate
    as public, pending or an exact-evidence hard exclusion before writing prose.
-4. **Media:** inspect attachments only for approved expressions; record include,
-   omit or retrieval gap against exact attachment IDs.
-5. **Language:** create one global temporal language plan, then generate packed
-   record batches from approved facts. Models return prose and exact claim maps;
-   deterministic code builds opening plans. Merge and run the global diversity gate.
-6. **Delivery:** assemble packet deterministically, build presentation, complete
+   Resolve company identity before Language: one author plus one verified company
+   has one active company Thesis even when record IDs, names or ticker-shaped
+   object keys differ. Keep reviewed alias mappings with the packet; themes and
+   baskets remain separate roles.
+4. **Weekly grouping (optional Feed compression):** after event-level Facts
+   review, group only same-author, same-company, same-UTC-week expressions with
+   identical expression-local ticker directions. Keep every raw event and source
+   ID; split reversals, new actions, conflicting conditions and different ticker
+   directions. Use `weekly-group` before Media/Language when the product wants a
+   compact weekly Feed.
+5. **Media:** inspect attachments only for approved expressions or weekly groups;
+   record include, omit or retrieval gap against exact attachment IDs.
+6. **Language:** create one global temporal language plan, then generate packed
+   record or weekly-group batches from approved facts. Models return prose and
+   exact claim maps; deterministic code builds opening plans. Merge and run the
+   global diversity gate. A weekly summary must cover every member increment or
+   leave the event in a separate group.
+7. **Delivery:** assemble packet deterministically, build presentation, complete
    hash-bound final review, export ThesisCards and project the temporal Feed.
 
 Never replace failed facts with polished language. Candidate conservation,
@@ -61,6 +73,8 @@ Load only the relevant module.
 
 ```bash
 node scripts/thesis-pipeline.mjs facts facts.json archive.json --triage triage.json --candidate-review candidate-review.json
+node scripts/thesis-pipeline.mjs canonicalize-history packet.json canonical-packet.json aliases.json
+node scripts/thesis-pipeline.mjs weekly-group packet.json weekly-grouping.json
 node scripts/thesis-pipeline.mjs pack packed-stage-spec.json packed-stage-plan.json
 node scripts/thesis-pipeline.mjs validate-backfill packet.json --triage triage.json --candidate-review candidate-review.json
 node scripts/thesis-pipeline.mjs gate-run run.json

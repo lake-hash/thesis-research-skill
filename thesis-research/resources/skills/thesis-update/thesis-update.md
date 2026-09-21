@@ -6,12 +6,11 @@ judgment can update several records.
 
 ## Preconditions
 
-- Work in the recipient's authorized Thesis workspace. Verify the repository
-  root and its own `.git` before edits.
-- Use the bundled Thesis core contract and machine policy as the portable
-  baseline. If the recipient also has a product workspace with versioned
-  classification or editorial rules, load those as product-specific additions;
-  they must not weaken the bundled contract.
+- Work in the recipient's authorized Thesis repository. Verify the repository
+  root and its own `.git` before edits, and do not relocate the task into a
+  parent or unrelated checkout.
+- Read the versioned `thesis-field-notes/classification-rules.txt` and
+  `editorial-rules.txt`. Do not copy or replace their policy in this skill.
 - Read the shared [operation contract](../references/thesis-operation-contract.md)
   before consuming or emitting a run, source, candidate, or state record.
 - Require the author's automation configuration, per-channel checkpoints,
@@ -99,11 +98,11 @@ from silence.
 Record cache hits, triage/deep-review counts, context/image inspections and stage
 elapsed time in the run report.
 
-When integrating with a separate prototype, inspect its current refresh and feed
-paths before using them. Treat that code as an implementation aid, not as proof
-that the complete multi-author service, review queue, or automation isolation
-exists. Use current provider documentation before relying on an unfamiliar
-source endpoint.
+For the prototype, inspect the current `thesis-field-notes/refresh.js` and its
+feed paths before using it. Treat it as an implementation aid, not as proof that
+the complete multi-author service, review queue, or automation isolation exists.
+Use current Alva data-skill documentation before relying on an unfamiliar source
+endpoint.
 
 ## Product field handoff
 

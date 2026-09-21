@@ -166,6 +166,18 @@ Both card and Timeline sentence one expose exact `stance_clause`,
 `mechanism_clause` and per-ticker `stance_realizations`. Review with tags hidden;
 metadata cannot satisfy stance-first.
 
+### Weekly Feed Compression
+
+When a `weekly-thesis-grouping/1.0` artifact is supplied, generate one visible
+summary per eligible group rather than repeating one prose block for every
+same-week member event. The summary is a presentation compression only: every
+member event remains in the packet and retains its own date, source, ticker
+direction, increment and media review. Do not combine a direction reversal, a
+new trade action, a new conditional risk or a different expression-local ticker
+set. The group summary must cover every material member increment or leave that
+event outside the group. The detail view must expose the member event IDs and
+their original dates.
+
 Backfill may use the full window to find the right company home for older posts.
 That does not grant older events access to later facts. Once published, preserve
 each event's ID, description, source links, date, support, account/episode and
@@ -224,10 +236,13 @@ Preserve day-only precision and distinguish a report's signature from publicatio
   Timeline when the primary Source changes; the previous anchor can reappear.
   An empty visible Timeline says `No other updates yet.` It does not mean the
   original source was not collected.
-- Show the date, single-paragraph body preview, historical ticker tags with logos
-  and the original source. No event headline, type prefix, audit tab, origin-unknown
-  label or Original source excerpt block. Types may remain stored; generated
-  `title` fields must not exist on active thesis or update records.
+- Show the date, single-paragraph body preview, reviewed required/helpful media,
+  historical ticker tags with logos and the original source. Timeline media is
+  expression-local: render only the images bound to that dated update, including
+  helpful price charts, and preserve the same lightbox behavior as the main Feed.
+  No event headline, type prefix, audit tab, origin-unknown label or Original
+  source excerpt block. Types may remain stored; generated `title` fields must
+  not exist on active thesis or update records.
 - At **40 English words or fewer**, show the complete preview. Above 40 words,
   show the first 40 words, an ellipsis and **Show more**. Collapse whitespace only
   in the preview; never truncate or rewrite the stored description. This limit

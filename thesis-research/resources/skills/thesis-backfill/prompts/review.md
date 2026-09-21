@@ -15,6 +15,12 @@ For every visible current card and dated event verify:
 - no process, portfolio-operation, technical-only or repeated language;
 - 500-character limit and named original link/date agreement.
 
+When weekly grouping is enabled, additionally verify that every grouped event
+has exactly one member group, the group uses the same ticker/direction set, the
+anchor is the latest member event, and the weekly prose covers every material
+member increment. A reversal, new action, changed condition or conflicting
+direction must remain a separate group.
+
 Run corpus checks on the actual rendered order:
 
 - current-card opening distribution;

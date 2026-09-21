@@ -1,4 +1,5 @@
 import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
+import {canonicalCompanyConflicts} from './canonical-company-history.mjs';
 
 export const FACT_LEDGER_CONTRACT=THESIS_POLICY.factLedgerContract;
 const list=value=>Array.isArray(value)?value:[];
@@ -58,6 +59,7 @@ export function validateFactLedger(facts,archive){
   check(matched.every(id=>sources.has(String(id))&&accounted.has(String(id))),label+' leaves matched history unaccounted');
   check(list(history?.public_event_ids).every(id=>eventIds.has(id)),label+' history references unknown public event');
  }
+ for(const issue of canonicalCompanyConflicts(list(facts?.records),facts).issues)check(false,issue);
  for(const id of publicSourceIds){const decision=decisions.find(row=>String(row.source_id)===id);check(decision?.disposition==='public','Public event source lacks public ledger disposition '+id);}
  return{ok:errors.length===0,errors,warnings,counts:{sources:sources.size,decisions:decisions.length,records:list(facts?.records).length,public_sources:publicSourceIds.size}};
 }

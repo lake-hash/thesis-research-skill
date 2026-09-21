@@ -5,9 +5,11 @@ The quality-preserving fast path uses six durable artifacts:
 1. `archive.json`: normalized, deduplicated originals, context and attachments.
 2. `triage.json`: one compact source decision per archived source; no prose.
 3. `facts.json`: `reviewed-thesis-facts/1.0`, the approved semantic ledger.
-4. `packet.json`: facts plus generated language, media decisions and review maps.
-5. `presentation.json`: deterministic current/detail projection.
-6. `playbook-data.json` and `feed-projection.json`: seven-field cards and temporal Feed.
+4. `weekly-grouping.json` (optional): deterministic weekly Feed compression map;
+   raw event facts remain in the packet.
+5. `packet.json`: facts plus generated language, media decisions and review maps.
+6. `presentation.json`: deterministic current/detail projection.
+7. `playbook-data.json` and `feed-projection.json`: seven-field cards and temporal Feed.
 
 ## Performance Rules
 
@@ -20,6 +22,10 @@ The quality-preserving fast path uses six durable artifacts:
 - Before Language, run candidate closure against the exact triage artifact. A
   complete candidate must be public, pending or carry an exact-evidence hard
   exclusion; a plan-level `source_only` label is not sufficient.
+- When weekly compression is enabled, run the deterministic weekly grouping
+  command after candidate closure and before Media/Language. It may reduce
+  displayed groups but must preserve every eligible event ID, source ID, date,
+  ticker direction and media attachment for audit and point-in-time views.
 - Generate one global temporal language plan, then write disjoint record batches
   in parallel. Merge them before the global diversity gate.
 - Pack independent fact groups and language records by character/token budget,
@@ -46,7 +52,7 @@ The quality-preserving fast path uses six durable artifacts:
 ## Quality Gates
 
 No stage may waive candidate conservation, exact evidence, grouping, expression-
-local ticker/direction/media, chronology, prose length, temporal diversity,
+local ticker/direction/media, weekly member-event coverage, chronology, prose length, temporal diversity,
 future-leakage prevention or final rendered review.
 
 Real authors and tickers are regression fixtures only. Validator behavior must

@@ -51,6 +51,12 @@ Use "complete within the declared accessible scope" only when all named channels
 and windows have closure evidence, no known processing gaps remain, and the
 limitations are stated. Never certify literal discovery of every public utterance.
 Separate **retrieved**, **classified**, **reviewed**, **approved**, and **published**.
+Pagination exhaustion proves that the provider returned no additional stored
+pages; it does not prove that the provider index is fresh through the requested
+end time. Compare `coverage.latest` with the requested upper bound and collection
+time. If the gap exceeds the declared tolerance, cross-check the live profile or
+another authorized source, mark coverage `partial`, and retain a freshness/sync
+gap until the missing interval is retrieved or explicitly closed.
 
 ## Originals, Context And Time
 

@@ -176,6 +176,20 @@ operating result, supply/demand claim or other point retained in the prose, mark
 the author explicitly relies on the visual and the retained context evidence proves
 that dependency. Do not treat
 "image belongs to another post" as an omission reason by itself.
+Source-posted stock-price charts and market-price charts follow the same rule.
+Include them as `helpful` when they materially clarify the valuation, risk/reward,
+drawdown, market reaction or dated condition of an independently qualifying
+Thesis or Timeline update. A price chart cannot by itself supply the public
+`what`, `why`, ticker or direction, and a technical-only setup remains private;
+but `technical_only` is not a valid omit category when the chart adds useful
+context to an otherwise source-supported public expression.
+Likewise, publisher, broker, company or research-firm authorship is not an
+omission reason by itself. If the source-posted chart, table, filing excerpt or
+announcement directly explains a forecast, operating result, supply/demand
+mechanism, partnership or risk retained in the public prose, include it as
+`helpful` with `context_image_role: explanatory_context` and preserve its true
+origin. Exclude it only for irrelevance, duplication, poor legibility, privacy or
+because it would introduce a claim that the public expression does not retain.
 Prefer the author's own current image when it already explains the point; omit
 duplicative, stale or merely adjacent context images with reasons. A retained
 media key without a usable URL is a retrieval gap, never an `omit` decision. Use

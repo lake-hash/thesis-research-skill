@@ -151,6 +151,13 @@ is never duplicated in that Timeline, and later evidence or the latest current
 snapshot must not leak into the historical view. The latest snapshot/group output
 remains available for the current-state view.
 
+Several company or theme deltas may be extracted from one original author post,
+but the main Feed renders that author/source expression only once. Prefer the
+source-level or basket expression that preserves the complete ticker set, useful
+media and central mechanism. Company-level child deltas remain in the raw history
+and `source_member_ids`; they do not create repeated cards pointing to the same
+post. Exact duplicate prose with conflicting ticker tags is an assembly failure.
+
 The temporal Feed also receives a deterministic surface-language review after
 all dated expressions are sorted into their actual display order. This review
 groups inflected templates such as `remain/remained + favored/attractive`,

@@ -4,6 +4,7 @@ import {ALL_GENERATION_VERSIONS,THESIS_POLICY} from '../../references/thesis-pol
 import {openingChainIssues,STANCE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
 import {publicTickersFromBindings,tickerStanceIssues,TICKER_STANCE_CONTRACT} from './ticker-stance-contract.mjs';
 import {SOURCE_FIDELITY_CONTRACT,sourceFidelityIssues,sourceFidelityClaimIssues} from './source-fidelity-contract.mjs';
+import {canonicalCompanyConflicts} from './canonical-company-history.mjs';
 const filled=v=>typeof v==='string'&&v.trim().length>0;
 const list=v=>Array.isArray(v)?v:[];
 const secure=v=>{try{return new URL(v).protocol==='https:';}catch{return false;}};
@@ -28,6 +29,7 @@ export function validateGenerationContract(packet,{baseline,check,warnings,requi
  if(policy?.version==='3.2')check(policy?.ticker_stance_contract===TICKER_STANCE_CONTRACT,'Current generation requires ticker_stance_contract: '+TICKER_STANCE_CONTRACT);
  if(policy?.version==='3.2')check(policy?.source_fidelity_contract===SOURCE_FIDELITY_CONTRACT,'Current generation requires source_fidelity_contract: '+SOURCE_FIDELITY_CONTRACT);
  const records=list(packet.records).filter(Boolean),sources=new Map(list(packet.sources).filter(Boolean).map(s=>[s.id,s]));
+ for(const issue of canonicalCompanyConflicts(records,packet).issues)check(false,issue);
  const authors=new Map(list(packet.authors).filter(Boolean).map(a=>[a.id,a]));
  const priorEvents=new Set(list(baseline?.records).flatMap(t=>list(t.events).map(e=>e.id)));
  const companies=new Map(),securities=new Map(),neededImages=new Map(),neededPeople=new Set();

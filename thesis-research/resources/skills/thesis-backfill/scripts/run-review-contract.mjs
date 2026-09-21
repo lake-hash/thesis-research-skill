@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import {THESIS_POLICY} from '../../references/thesis-policy.mjs';
 import {openingChainIssues,timelineOpeningIssues,STANCE_OPENING_CONTRACT,TIMELINE_OPENING_CONTRACT} from './stance-opening-contract.mjs';
 import {publicTickersFromBindings,publicTickerStances,tickerStanceIssues} from './ticker-stance-contract.mjs';
+import {canonicalCompanyConflicts,resolveCanonicalCompany,compileCanonicalCompanyAliases} from './canonical-company-history.mjs';
 
 const list = v => Array.isArray(v) ? v : [];
 const text = v => typeof v === 'string' && v.trim().length > 0;
@@ -38,9 +39,11 @@ const bindingKeys = r => new Set(list(r.asset_bindings)
     b.market && b.symbol && 'security:' + b.market + ':' + b.symbol.toUpperCase()].filter(Boolean)));
 
 // Also used on a batch/global index. Identity resolution is still an agent duty.
-export function validateObjectGrouping(records, overlapReviews, sources, check) {
+export function validateObjectGrouping(records, overlapReviews, sources, check, aliasCatalog={}) {
   const active = list(records).filter(r => r && !r.superseded_by && r.type !== 'context'
     && r.review?.status === 'approved');
+  const canonicalCatalog=compileCanonicalCompanyAliases(aliasCatalog);
+  for(const issue of canonicalCompanyConflicts(active,canonicalCatalog).issues)check(false,issue);
   for (let i = 0; i < active.length; i++) for (let j = i + 1; j < active.length; j++) {
     const a = active[i], b = active[j];
     if (a.author_id !== b.author_id) continue;
@@ -49,6 +52,8 @@ export function validateObjectGrouping(records, overlapReviews, sources, check) 
       check(false, label + ' duplicates author/investment object; merge trading episodes');
       continue;
     }
+    const ac=resolveCanonicalCompany(a,canonicalCatalog),bc=resolveCanonicalCompany(b,canonicalCatalog);
+    if(ac.canonical_key&&ac.canonical_key===bc.canonical_key)continue;
     const ak = bindingKeys(a), bk = bindingKeys(b);
     if (![...ak].some(k => bk.has(k))) continue;
     if (![a, b].some(r => r.object_type === 'basket')) {
